@@ -12,7 +12,7 @@ import {
 
 import './editor';
 
-import { BoilerplateCardConfig } from './types';
+import { LightningDetectorCardConfig } from './types';
 import { actionHandler } from './action-handler-directive';
 import { CARD_VERSION } from './const';
 
@@ -20,23 +20,23 @@ import { localize } from './localize/localize';
 
 /* eslint no-console: 0 */
 console.info(
-  `%c  BOILERPLATE-CARD \n%c  ${localize('common.version')} ${CARD_VERSION}    `,
+  `%c  LIGHTNING-DETECTOR-CARD \n%c  ${localize('common.version')} ${CARD_VERSION}    `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray',
 );
 
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-  type: 'boilerplate-card',
-  name: 'Boilerplate Card',
-  description: 'A template custom card for you to create something awesome',
+  type: 'lightning-detector-card',
+  name: 'Lightning Detector Card',
+  description: 'A card for displaying lightning in the local area as detected by an AS3935 sensor',
 });
 
 // TODO Name your custom element
-@customElement('boilerplate-card')
-export class BoilerplateCard extends LitElement {
+@customElement('lightning-detector-card')
+export class LightningDetectorCard extends LitElement {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    return document.createElement('boilerplate-card-editor') as LovelaceCardEditor;
+    return document.createElement('lightning-detector-card-editor') as LovelaceCardEditor;
   }
 
   public static getStubConfig(): object {
@@ -45,9 +45,9 @@ export class BoilerplateCard extends LitElement {
 
   // TODO Add any properities that should cause your element to re-render here
   @property() public hass!: HomeAssistant;
-  @property() private _config!: BoilerplateCardConfig;
+  @property() private _config!: LightningDetectorCardConfig;
 
-  public setConfig(config: BoilerplateCardConfig): void {
+  public setConfig(config: LightningDetectorCardConfig): void {
     // TODO Check for required fields and that they are of the proper format
     if (!config || config.show_error) {
       throw new Error(localize('common.invalid_configuration'));

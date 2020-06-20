@@ -13,4 +13,13 @@ NOTE: this is our initial mockup. We'll see how close we get over time.
 
 You buy an AS3935 sensor and attach it to a Raspberry Pi and the software for communicating the sensor data to home assistant can be found in at [lightning-detector-MQTT2HA-Daemon](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon) project.
 
+
+## License
+
+Copyright © 2020 Iron Sheep Productions, LLC. All rights reserved.<br />
+Licensed under the MIT License. <br>
+<br>
+Follow these links for more information:
+### [Copyright](copyright) | [License](LICENSE)
+
 [maintenance-shield]: https://img.shields.io/badge/maintainer-S%20M%20Moraco%20%40ironsheepbiz-blue.svg?style=for-the-badge

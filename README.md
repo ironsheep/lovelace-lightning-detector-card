@@ -9,6 +9,12 @@ We are working on a new Lovelace card for depicting lightning in your local area
 
 NOTE: this is our initial mockup. We'll see how close we get over time. 
 
+## Support
+
+Hey dude! Help me out for a couple of :coffee:'s or :pizza: slices!
+
+[![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep)
+
 ### Sensor for this card
 
 You buy an AS3935 sensor and attach it to a Raspberry Pi and the software for communicating the sensor data to home assistant can be found in at [lightning-detector-MQTT2HA-Daemon](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon) project.
@@ -32,7 +38,7 @@ or download [lightning-detector-card.js](https://github.com/ironsheep/lovelace-l
 
 In your ui-lovelace.yaml add this:
 
-```
+```yaml
 - url: /hacsfiles/lightning-detector-card/lightning-detector-card.js
   type: model
 ```

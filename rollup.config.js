@@ -32,7 +32,7 @@ const plugins = [
 
 export default [
   {
-    input: 'src/boilerplate-card.ts',
+    input: 'src/lightning-detector-card.ts',
     output: {
       dir: 'dist',
       format: 'es',

@@ -58,9 +58,13 @@ export class LightningDetectorCard extends LitElement {
     }
 
     this._config = {
-      name: 'Boilerplate',
+      name: 'LightningDetector',
       ...config,
     };
+  }
+
+  public getCardSize(): number {
+    return 3;
   }
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -82,7 +86,7 @@ export class LightningDetectorCard extends LitElement {
           hasDoubleClick: hasAction(this._config.double_tap_action),
         })}
         tabindex="0"
-        aria-label=${`Boilerplate: ${this._config.entity}`}
+        aria-label=${`LightningDetector: ${this._config.entity}`}
       ></ha-card>
     `;
   }

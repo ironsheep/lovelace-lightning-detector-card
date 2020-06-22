@@ -116,7 +116,7 @@ export class LightningDetectorCardEditor extends LitElement implements LovelaceC
     }
 
     // You can restrict on domain type
-    const entities = Object.keys(this.hass.states).filter(eid => eid.substr(0, eid.indexOf('.')) === 'sun');
+    const entities = Object.keys(this.hass.states).filter(eid => eid.substr(0, eid.indexOf('.')) === 'sensor');
 
     return html`
       <div class="card-config">

@@ -6,8 +6,14 @@ We are working on a new Lovelace card for depicting lightning in your local area
 
 ![Discovered by Home Assistant](Docs/images/goal-cards.png)
 
-
 NOTE: this is our initial mockup. We'll see how close we get over time. 
+
+
+From another perspective we are taking data as shown below on the left to make the display on the right:
+
+![Currently seen by Home Assistant](Docs/images/intent-card.png)
+
+*NOTE: the values on the left are not what are shown on the right (which is more interesting...) but you get the point, right?*
 
 ## Support
 

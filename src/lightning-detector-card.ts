@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-inferrable-types */
 import { LitElement, html, customElement, property, CSSResult, TemplateResult, css, PropertyValues } from 'lit-element';
+// found custom-card-helpers:applyThemesOnElement being imported in roku-card... not here.  Useful? */
 import {
   HomeAssistant,
   hasConfigOrEntityChanged,
@@ -25,32 +27,43 @@ console.info(
   'color: white; font-weight: bold; background: dimgray',
 );
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).customCards = (window as any).customCards || [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).customCards.push({
   type: 'lightning-detector-card',
   name: 'Lightning Detector Card',
   description: 'A card for displaying lightning in the local area as detected by an AS3935 sensor',
 });
 
-// TODO Name your custom element
+//  Name of our custom element
 @customElement('lightning-detector-card')
 export class LightningDetectorCard extends LitElement {
-  public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    return document.createElement('lightning-detector-card-editor') as LovelaceCardEditor;
-  }
+  //public static async getConfigElement(): Promise<LovelaceCardEditor> {
+  //  return document.createElement('lightning-detector-card-editor') as LovelaceCardEditor;
+  //}
 
-  public static getStubConfig(): object {
-    return {};
-  }
+  //public static getStubConfig(): object {
+  //  return {};
+  //}
 
   // TODO Add any properities that should cause your element to re-render here
-  @property() public hass!: HomeAssistant;
+  @property() private hass!: HomeAssistant;
   @property() private _config!: LightningDetectorCardConfig;
+  @property() private _firstTime: boolean = true;
+
+  private _light_color?: string;
+  private _medium_color?: string;
+  private _heavy_color?: string;
 
   public setConfig(config: LightningDetectorCardConfig): void {
     // TODO Check for required fields and that they are of the proper format
     if (!config || config.show_error) {
       throw new Error(localize('common.invalid_configuration'));
+    }
+    if (!config.entity) {
+      console.log("Invalid configuration. If no entity provided, you'll need to provide a remote entity");
+      throw new Error('You need to associate an entity');
     }
 
     if (config.test_gui) {
@@ -58,19 +71,47 @@ export class LightningDetectorCard extends LitElement {
     }
 
     this._config = {
-      name: 'LightningDetector',
+      name: undefined,
       ...config,
     };
+
+    console.log('- config:');
+    console.log(this._config);
+
+    //   const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
+    //   console.log('- stateObj:');
+    //   console.log(stateObj);
   }
 
-  protected shouldUpdate(changedProps: PropertyValues): boolean {
-    return hasConfigOrEntityChanged(this, changedProps, false);
-  }
+  // The height this card.  Home Assistant uses this to automatically
+  // distribute all cards over the available columns.
+  //public getCardSize(): number {
+  //  return 5;
+  //}
+
+  //protected shouldUpdate(changedProps: PropertyValues): boolean {
+  //  return hasConfigOrEntityChanged(this, changedProps, false);
+  //}
 
   protected render(): TemplateResult | void {
     // TODO Check for stateObj or other necessary things and render a warning if missing
     if (this._config.show_warning) {
       return this.showWarning(localize('common.show_warning'));
+    }
+
+    const entityId = this._config.entity ? this._config.entity : undefined;
+    const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
+
+    if (!entityId && !stateObj) {
+      return this.showWarning('Entity Unavailable');
+    }
+
+    const stateStr = stateObj ? stateObj.state : 'unavailable';
+
+    if (this._firstTime) {
+      console.log('- stateObj:');
+      console.log(stateObj);
+      this._firstTime = false;
     }
 
     return html`
@@ -81,72 +122,83 @@ export class LightningDetectorCard extends LitElement {
           hasHold: hasAction(this._config.hold_action),
           hasDoubleClick: hasAction(this._config.double_tap_action),
         })}
-        tabindex="0"
-        aria-label=${`LightningDetector: ${this._config.entity}`}
       >
-        <div class="container">
-          <svg class="panel" viewBox="0 0 10 10" width="100%">
-            <circle
-              class="high"
-              cx="5"
-              cy="5"
-              r="4"
-              stroke="#8c8c8c"
-              stroke-dasharray="0 0.1"
-              stroke-width="0.03"
-              stroke-linecap="round"
-            />
-            <circle
-              class="medium"
-              cx="5"
-              cy="5"
-              r="3.3"
-              stroke="#8c8c8c"
-              stroke-dasharray="0 0.1"
-              stroke-width="0.03"
-              stroke-linecap="round"
-            />
-            <circle
-              class="low"
-              cx="5"
-              cy="5"
-              r="2.7"
-              stroke="#8c8c8c"
-              stroke-dasharray="0 0.1"
-              stroke-width="0.03"
-              stroke-linecap="round"
-            />
-            <circle
-              class="none"
-              cx="5"
-              cy="5"
-              r="2.0"
-              stroke="#8c8c8c"
-              stroke-dasharray="0 0.1"
-              stroke-width="0.03"
-              stroke-linecap="round"
-            />
-            <circle
-              class="none"
-              cx="5"
-              cy="5"
-              r="1.3"
-              stroke="#8c8c8c"
-              stroke-dasharray="0 0.1"
-              stroke-width="0.03"
-              stroke-linecap="round"
-            />
-            <circle
-              class="none"
-              cx="5"
-              cy="5"
-              r="0.7"
-              stroke="#8c8c8c"
-              stroke-dasharray="0 0.1"
-              stroke-width="0.03"
-              stroke-linecap="round"
-            />
-          </svg>
+        <div class="card-content">
+          <div class="rings">
+            <svg class="graphics" viewBox="0 0 10 10" width="100%">
+              <circle
+                class="high"
+                cx="5"
+                cy="5"
+                r="4"
+                stroke="#8c8c8c"
+                stroke-dasharray="0 0.1"
+                stroke-width="0.03"
+                stroke-linecap="round"
+              />
+              <circle
+                class="medium"
+                cx="5"
+                cy="5"
+                r="3.3"
+                stroke="#8c8c8c"
+                stroke-dasharray="0 0.1"
+                stroke-width="0.03"
+                stroke-linecap="round"
+              />
+              <circle
+                class="low"
+                cx="5"
+                cy="5"
+                r="2.7"
+                stroke="#8c8c8c"
+                stroke-dasharray="0 0.1"
+                stroke-width="0.03"
+                stroke-linecap="round"
+              />
+              <circle
+                class="none"
+                cx="5"
+                cy="5"
+                r="2.0"
+                stroke="#8c8c8c"
+                stroke-dasharray="0 0.1"
+                stroke-width="0.03"
+                stroke-linecap="round"
+              />
+              <circle
+                class="none"
+                cx="5"
+                cy="5"
+                r="1.3"
+                stroke="#8c8c8c"
+                stroke-dasharray="0 0.1"
+                stroke-width="0.03"
+                stroke-linecap="round"
+              />
+              <circle
+                class="none"
+                cx="5"
+                cy="5"
+                r="0.7"
+                stroke="#8c8c8c"
+                stroke-dasharray="0 0.1"
+                stroke-width="0.03"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="distance-label legend-light">Distance</div>
+            <div class="detections-label legend-light rotate">Detections</div>
+            <div class="ring5-dist label-dark">21-25 mi</div>
+            <div class="ring4-dist label-dark">16-20 mi</div>
+            <div class="ring3-dist label-dark">11-15 mi</div>
+            <div class="ring2-dist label-light">6-10 mi</div>
+            <div class="ring1-dist label-light">2-5 mi</div>
+            <div class="ring0 centered label-light">Overhead</div>
+            <div class="ring5-det legend-dark">25</div>
+            <div class="ring4-det legend-dark">8</div>
+            <div class="ring3-det legend-dark">2</div>
+          </div>
 
           <div class="status-text">Lightning: 11-25+ mi</div>
           <div class="interp-text">
@@ -154,20 +206,22 @@ export class LightningDetectorCard extends LitElement {
             8 detections, max power 5k<br />
             25 detections, max power 200k
           </div>
-          <div class="ring5-dist label-dark">21-25 mi</div>
-          <div class="ring4-dist label-dark">16-20 mi</div>
-          <div class="ring3-dist label-dark">11-15 mi</div>
-          <div class="ring2-dist label-light">6-10 mi</div>
-          <div class="ring1-dist label-light">2-5 mi</div>
-          <div class="distance-label legend-light">Distance</div>
-
-          <div class="detections-label legend-dark">Detections</div>
-          <div class="ring0 centered label-light">Overhead</div>
-          <div class="ring5-det legend-dark">25</div>
-          <div class="ring4-det legend-dark">8</div>
-          <div class="ring3-det legend-dark">2</div>
         </div>
+        <div class="last-heard legend-light">The state is ${stateStr}!</div>
       </ha-card>
+    `;
+  }
+
+  private _text_hold(error: string): TemplateResult {
+    const errorCard = document.createElement('hui-error-card') as LovelaceCard;
+    errorCard.setConfig({
+      type: 'error',
+      error,
+      origConfig: this._config,
+    });
+
+    return html`
+      <ha-card .header=${this._config.name}> </ha-card>
     `;
   }
 
@@ -198,8 +252,29 @@ export class LightningDetectorCard extends LitElement {
 
   static get styles(): CSSResult {
     return css`
-      :host ha-card {
-        padding: 10px 10px 10px 10px;
+      ha-card {
+        background-color: violet;
+      }
+      div {
+        /*background-color: red;*/
+      }
+      .graphics {
+        /*background-color: orange;*/
+      }
+      .card-content {
+        padding: 80px 0px 0px 0px; /* NOTE: we add +16 to top pad so we have space at top of card when no-name! */
+        margin: 0px 0px 0px 0px; /* NOTE: top should be -16 if name is present */
+        display: block;
+        background-color: yellow;
+        position: relative; /* ensure descendant abs-objects are relative this? */
+      }
+      .rings {
+        background-color: green;
+        /*padding: 0px;*/
+        position: relative; /* ensure descendant abs-objects are relative this? */
+      }
+      .rotate {
+        writing-mode: vertical-rl;
       }
 
       .low {
@@ -213,18 +288,6 @@ export class LightningDetectorCard extends LitElement {
       }
       .none {
         fill: #252629;
-      }
-      .panel {
-        background-color: #252629;
-      }
-      body {
-        background-color: #fff;
-      }
-      /* Container holding the image and the text */
-      .container {
-        position: relative;
-        text-align: center;
-        color: white;
       }
 
       /* Bottom left text */
@@ -251,30 +314,32 @@ export class LightningDetectorCard extends LitElement {
       /* Bottom right text */
       .bottom-right {
         position: absolute;
-        bottom: 8px;
+        top: 8px;
         right: 16px;
       }
 
       .status-text {
         position: absolute;
-        top: 35px;
-        right: 40px;
-        font-family: Arial, Helvetica, sans-serif;
+        top: 16px;
+        right: 10px;
+        /* font-family: Arial, Helvetica, sans-serif; */
         font-style: normal;
         font-weight: bold;
-        font-size: 27px;
-        color: #8c8c8c;
+        font-size: 14px;
+        line-height: 14px;
+        /* color: #8c8c8c; */
       }
 
       .interp-text {
         position: absolute;
-        top: 35px;
-        left: 40px;
-        font-family: Arial, Helvetica, sans-serif;
+        top: 30px;
+        left: 10px;
+        /* font-family: Arial, Helvetica, sans-serif; */
         font-style: normal;
         font-weight: bold;
-        font-size: 14px;
-        color: #8c8c8c;
+        font-size: 10px;
+        line-height: 13px;
+        /* color: #8c8c8c; */
         text-align: right;
       }
 
@@ -289,35 +354,35 @@ export class LightningDetectorCard extends LitElement {
       /* bottom centered on ring */
       .ring5-dist {
         position: absolute;
-        bottom: 12%;
+        bottom: 9%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
 
       .ring4-dist {
         position: absolute;
-        bottom: 18.5%;
+        bottom: 15%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
 
       .ring3-dist {
         position: absolute;
-        bottom: 25%;
+        bottom: 22%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
 
       .ring2-dist {
         position: absolute;
-        bottom: 32%;
+        bottom: 29%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
 
       .ring1-dist {
         position: absolute;
-        bottom: 39%;
+        bottom: 35.5%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
@@ -325,63 +390,63 @@ export class LightningDetectorCard extends LitElement {
       /* bottom center */
       .distance-label {
         position: absolute;
-        bottom: 6.5%;
+        bottom: 2%;
         left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      /* left just-above-center */
+      .detections-label {
+        position: absolute;
+        top: 50%;
+        left: 5%;
         transform: translate(-50%, -50%);
       }
 
       .label-dark {
         color: #000;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 13px;
+        /* font-family: Arial, Helvetica, sans-serif; */
+        font-size: 9px;
       }
 
       .label-light {
         color: #bdc1c6;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 13px;
+        /* font-family: Arial, Helvetica, sans-serif; */
+        font-size: 9px;
       }
 
       .legend-dark {
         color: #000;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 15px;
+        /* font-family: Arial, Helvetica, sans-serif; */
+        font-size: 10px;
         font-weight: bold;
       }
 
       .legend-light {
         color: #bdc1c6;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 15px;
+        /* font-family: Arial, Helvetica, sans-serif; */
+        font-size: 10px;
         font-weight: bold;
       }
 
       .ring5-det {
         position: absolute;
-        bottom: 50%;
+        top: 50%;
         left: 14%;
         transform: translate(-50%, -50%);
       }
 
       .ring4-det {
         position: absolute;
-        bottom: 50%;
+        top: 50%;
         left: 20%;
         transform: translate(-50%, -50%);
       }
 
       .ring3-det {
         position: absolute;
-        bottom: 50%;
+        top: 50%;
         left: 27%;
-        transform: translate(-50%, -50%);
-      }
-
-      /* bottom center */
-      .detections-label {
-        position: absolute;
-        top: 46%;
-        left: 20%;
         transform: translate(-50%, -50%);
       }
     `;

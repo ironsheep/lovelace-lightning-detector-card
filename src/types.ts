@@ -1,4 +1,5 @@
 import { ActionConfig, LovelaceCardConfig } from 'custom-card-helpers';
+import { TemplateResult } from 'lit-element';
 
 // maybe we store JSON parts here?  undecided!
 interface JSONDictionary {
@@ -15,15 +16,11 @@ export interface LightningDetectorCardConfig extends LovelaceCardConfig {
   out_of_range_count?: number;
   ring_count?: number;
   ring_width?: number;
-  // TODO add each ring [4-7]? or rings[]?  ea. has { count, distance, energy }
-  ring0_dict?: JSONDictionary;
-  ring1_dict?: JSONDictionary;
-  ring2_dict?: JSONDictionary;
-  ring3_dict?: JSONDictionary;
-  ring4_dict?: JSONDictionary;
-  ring5_dict?: JSONDictionary;
-  ring6_dict?: JSONDictionary;
-  ring7_dict?: JSONDictionary;
+  // display values for each ring
+  ringsImage?: TemplateResult;
+  ringsLegend?: TemplateResult;
+  ringsTitles?: TemplateResult;
+  cardText?: TemplateResult;
   // end new
 
   // colors from Lovelace config entries

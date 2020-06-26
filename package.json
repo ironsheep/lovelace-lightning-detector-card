@@ -1,6 +1,6 @@
 {
   "name": "lightning-detector-card",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Lovelace Lightning Detector Card",
   "keywords": [
     "home-assistant",

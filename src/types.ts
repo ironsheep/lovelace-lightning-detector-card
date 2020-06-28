@@ -17,10 +17,10 @@ export interface LightningDetectorCardConfig extends LovelaceCardConfig {
   ring_count?: number;
   ring_width?: number;
   // display values for each ring
-  ringsImage?: TemplateResult;
-  ringsLegend?: TemplateResult;
-  ringsTitles?: TemplateResult;
-  cardText?: TemplateResult;
+  ringsImage?: TemplateResult[];
+  ringsLegend?: TemplateResult[];
+  ringsTitles?: TemplateResult[];
+  cardText?: TemplateResult[];
   // end new
 
   // colors from Lovelace config entries

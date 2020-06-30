@@ -111,9 +111,22 @@ export class LightningDetectorCard extends LitElement {
   //  return 5;
   //}
 
-  //protected shouldUpdate(changedProps: PropertyValues): boolean {
-  //  return hasConfigOrEntityChanged(this, changedProps, false);
-  //}
+  protected shouldUpdate(changedProps: PropertyValues): boolean {
+    if (changedProps.has('_config')) {
+      return true;
+    }
+
+    if (this.hass && this._config) {
+      const oldHass = changedProps.get('hass') as HomeAssistant | undefined;
+
+      if (oldHass) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return oldHass.states[this._config.entity!] !== this.hass.states[this._config.entity!];
+      }
+    }
+
+    return true;
+  }
 
   protected render(): TemplateResult | void {
     // TODO Check for stateObj or other necessary things and render a warning if missing
@@ -128,9 +141,11 @@ export class LightningDetectorCard extends LitElement {
       return this.showWarning('Entity Unavailable');
     }
 
-    const stateStr = stateObj ? stateObj.state : 'unavailable';
+    //const stateStr = stateObj ? stateObj.state : 'unavailable';
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
+    const relativeInterp =
+      stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
 
     let needRingsGeneration = false;
 
@@ -138,11 +153,14 @@ export class LightningDetectorCard extends LitElement {
       console.log('- stateObj:');
       console.log(stateObj);
 
+      // set timer so our card updates timestamp every 5 seconds
+      setInterval(() => this._updateTime(), 5000);
+
       // set initial config values from entity, too
       this._config.units = stateObj?.attributes['units'];
       this._config.ring_count = stateObj?.attributes['ring_count'];
-      this._config.ring_width = stateObj?.attributes['ring_width'];
-      this._config.out_of_range_count = stateObj?.attributes['outofrange'];
+      this._config.ring_width = stateObj?.attributes['ring_width_km'];
+      this._config.out_of_range_count = stateObj?.attributes['out_of_range'];
       this._config.period_in_minutes = stateObj?.attributes['period_minutes'];
 
       needRingsGeneration = true;
@@ -163,7 +181,7 @@ export class LightningDetectorCard extends LitElement {
       // update config values from entity, too
       this._config.units = stateObj?.attributes['units'];
       this._config.ring_count = stateObj?.attributes['ring_count'];
-      this._config.ring_width = stateObj?.attributes['ring_width'];
+      this._config.ring_width = stateObj?.attributes['ring_width_km'];
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const ring_count: number = this._config.ring_count!;
@@ -189,9 +207,22 @@ export class LightningDetectorCard extends LitElement {
           <div class="rings">${this._config.ringsImage} ${this._config.ringsLegend} ${this._config.ringsTitles}</div>
           ${this._config.cardText}
         </div>
-        <div class="last-heard legend-light">Last report: ${stateStrInterp}!</div>
+        <div id="lightning-timestamp" class="last-heard legend-light">Last report: ${relativeInterp}!</div>
       </ha-card>
     `;
+  }
+
+  private _updateTime(): void {
+    // call when time to refresh our card's relative time for last report
+    const root: any = this.shadowRoot;
+    const labelElement = root.getElementById('lightning-timestamp');
+    const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
+    const relativeInterp =
+      stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
+    const newLabel = 'Last report: ' + relativeInterp;
+    labelElement.textContent = newLabel;
   }
 
   private _ringsEntry(key: string): string {
@@ -203,6 +234,7 @@ export class LightningDetectorCard extends LitElement {
     }
     return ring_value;
   }
+
   private _ringDictionary(ring_index: number): object {
     const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
     const ring_key: string = 'ring' + ring_index;
@@ -262,13 +294,9 @@ export class LightningDetectorCard extends LitElement {
     for (let ring_index = ring_count; ring_index >= 0; ring_index--) {
       const ringColorClass: string = this._ringColorClass(ring_index);
       const circleHTML: TemplateResult = this._circle(ring_index, ring_count, ringColorClass);
-      //console.log('- ring circle:');
-      //console.log(circleHTML);
+
       ringArray.push(circleHTML);
     }
-
-    //console.log('- ring circle-set:');
-    //console.log(ringArray);
 
     svgArray.push(html`
       <svg class="graphics" viewBox="0 0 10 10" width="100%">
@@ -276,30 +304,127 @@ export class LightningDetectorCard extends LitElement {
       </svg>
     `);
 
-    //console.log('- svgHTML:');
-    //console.log(svgHTML);
-
     return svgArray;
+  }
+
+  private _colorForBasePower(color_base: string, power: number): string {
+    if (color_base) {
+    }
+    if (power) {
+    }
+    return '';
+  }
+
+  private _circleFillColor(ring_index: number): string {
+    const currRingDictionary = this._ringDictionary(ring_index);
+    const energy = currRingDictionary['energy'];
+    const count = currRingDictionary['count'];
+    // power is 100%, 65%, 45% or 0
+    let power = 0;
+    if (energy > 200000) {
+      power = 100;
+    } else if (energy > 100000) {
+      power = 65;
+    } else if (energy > 0) {
+      power = 45;
+    }
+    // colorbase is red, orange, yellow or black
+    let color_base = 'black';
+    if (count > 10) {
+      color_base = 'red';
+    } else if (count > 3) {
+      color_base = 'orange';
+    } else if (count > 0) {
+      color_base = 'yellow';
+    }
+    return this._colorForBasePower(color_base, power);
+  }
+
+  private _circleRadius(ring_index: number, ring_count: number): string {
+    const total_segment_widths = ring_count * 2 + 2; // +2 for center - total widths are...
+    const ring_diameter = ring_index * 2 + 2; // and this ring dia is...
+    const diameter_percent = (ring_diameter / total_segment_widths) * 0.85; // 0.85 = 85% of width
+    const radius = diameter_percent * 5; // scale to 10 units of width (radius = 5)
+    return radius.toFixed(1);
   }
 
   private _createRings(ring_count: number): TemplateResult[] {
     const svgArray: TemplateResult[] = [];
-    const classArray: string[] = [];
+    const ringClassArray: string[] = [];
+    const ringRadiusArray: string[] = [];
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
       const ringColorClass: string = this._ringColorClass(ring_index);
-      classArray.push(ringColorClass);
+      ringClassArray.push(ringColorClass);
+      const ringRadius: string = this._circleRadius(ring_index, ring_count);
+      ringRadiusArray.push(ringRadius);
     }
 
-    svgArray.push(html`
-      <svg class="graphics" viewBox="0 0 10 10" width="100%">
-        <circle class="${classArray[5]}" cx="5" cy="5" r="4" />
-        <circle class="${classArray[4]}" cx="5" cy="5" r="3.3" />
-        <circle class="${classArray[3]}" cx="5" cy="5" r="2.7" />
-        <circle class="${classArray[2]}" cx="5" cy="5" r="2.0" />
-        <circle class="${classArray[1]}" cx="5" cy="5" r="1.3" />
-        <circle class="${classArray[0]}" cx="5" cy="5" r="0.7" />
-      </svg>
-    `);
+    switch (ring_count) {
+      case 7:
+        // code block - 7 rings
+        svgArray.push(html`
+          <svg class="graphics" viewBox="0 0 10 10" width="100%">
+            <circle class="${ringClassArray[7]}" cx="5" cy="5" r="${ringRadiusArray[7]}" />
+            <circle class="${ringClassArray[6]}" cx="5" cy="5" r="${ringRadiusArray[6]}" />
+            <circle class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
+            <circle class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+            <circle class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+            <circle class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+            <circle class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+            <circle class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+          </svg>
+        `);
+        break;
+      case 6:
+        // code block - 6 rings
+        svgArray.push(html`
+          <svg class="graphics" viewBox="0 0 10 10" width="100%">
+            <circle class="${ringClassArray[6]}" cx="5" cy="5" r="${ringRadiusArray[6]}" />
+            <circle class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
+            <circle class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+            <circle class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+            <circle class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+            <circle class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+            <circle class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+          </svg>
+        `);
+        break;
+      case 5:
+        // code block - 5 rings
+        svgArray.push(html`
+          <svg class="graphics" viewBox="0 0 10 10" width="100%">
+            <circle class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
+            <circle class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+            <circle class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+            <circle class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+            <circle class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+            <circle class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+          </svg>
+        `);
+        break;
+      case 4:
+        // code block - 4 rings
+        svgArray.push(html`
+          <svg class="graphics" viewBox="0 0 10 10" width="100%">
+            <circle class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+            <circle class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+            <circle class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+            <circle class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+            <circle class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+          </svg>
+        `);
+        break;
+      default:
+        // code block - assume 3 rings
+        svgArray.push(html`
+          <svg class="graphics" viewBox="0 0 10 10" width="100%">
+            <circle class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+            <circle class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+            <circle class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+            <circle class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+          </svg>
+        `);
+    }
 
     return svgArray;
   }
@@ -308,12 +433,12 @@ export class LightningDetectorCard extends LitElement {
     const labelsArray: TemplateResult[] = [];
     labelsArray.push(
       html`
-        <div class="distance-label legend-light">Distance</div>
+        <div class="distance-legend legend-light">Distance</div>
       `,
     );
     labelsArray.push(
       html`
-        <div class="detections-label legend-light rotate">Detections</div>
+        <div class="detections-legend legend-light rotate">Detections</div>
       `,
     );
 
@@ -365,7 +490,7 @@ export class LightningDetectorCard extends LitElement {
     let min_ring_dist = kMinNotSet;
     let max_ring_dist = kMaxNotSet;
     const units_string: string = this._ringsEntry('units');
-    const out_of_range: number = parseInt(this._ringsEntry('outofrange'), 10);
+    const out_of_range: number = parseInt(this._ringsEntry('out_of_range'), 10);
     let total_count = out_of_range;
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
       const currRingDictionary = this._ringDictionary(ring_index);
@@ -384,7 +509,7 @@ export class LightningDetectorCard extends LitElement {
         let max_power_interp = '200k';
         const energy_in_k = energy / 1000;
         if (energy_in_k > 5) {
-          max_power_interp = energy_in_k.toFixed(0) + 'k+';
+          max_power_interp = energy_in_k.toFixed(0) + 'k +';
         } else {
           max_power_interp = '< 5k';
         }
@@ -405,7 +530,7 @@ export class LightningDetectorCard extends LitElement {
     const title =
       total_count == 0
         ? 'No Lightning in Area'
-        : 'Lightning: ' + min_ring_dist + '-' + max_ring_dist + ' ' + units_string;
+        : 'Lightning: ' + min_ring_dist + ' - ' + max_ring_dist + ' ' + units_string;
     labelsArray.push(html`
       <div class="status-text">${title}</div>
     `);
@@ -563,8 +688,8 @@ export class LightningDetectorCard extends LitElement {
         /* font-family: Arial, Helvetica, sans-serif; */
         font-style: normal;
         font-weight: bold;
-        font-size: 10px;
-        line-height: 13px;
+        font-size: 12px;
+        line-height: 15px;
         /* color: #8c8c8c; */
         text-align: right;
       }
@@ -578,54 +703,69 @@ export class LightningDetectorCard extends LitElement {
       }
 
       /* bottom centered on ring */
+      .ring7-dist {
+        position: absolute;
+        bottom: 7%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      /* bottom centered on ring */
+      .ring6-dist {
+        position: absolute;
+        bottom: 12%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      /* bottom centered on ring */
       .ring5-dist {
         position: absolute;
-        bottom: 9%;
+        bottom: 7.52%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
-
       .ring4-dist {
         position: absolute;
-        bottom: 15%;
+        bottom: 14.64%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
-
       .ring3-dist {
         position: absolute;
-        bottom: 22%;
+        bottom: 21.76%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
-
       .ring2-dist {
         position: absolute;
-        bottom: 29%;
+        bottom: 28.88%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
-
       .ring1-dist {
         position: absolute;
-        bottom: 35.5%;
+        bottom: 36%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .ring0-dist {
+        position: absolute;
+        top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
 
       /* bottom center */
-      .distance-label {
+      .distance-legend {
         position: absolute;
-        bottom: 2%;
+        bottom: 1%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
-
       /* left just-above-center */
-      .detections-label {
+      .detections-legend {
         position: absolute;
         top: 50%;
-        left: 5%;
+        left: 4%;
         transform: translate(-50%, -50%);
       }
 
@@ -634,7 +774,6 @@ export class LightningDetectorCard extends LitElement {
         /* font-family: Arial, Helvetica, sans-serif; */
         font-size: 9px;
       }
-
       .label-light {
         color: #bdc1c6;
         /* font-family: Arial, Helvetica, sans-serif; */
@@ -647,7 +786,6 @@ export class LightningDetectorCard extends LitElement {
         font-size: 10px;
         font-weight: bold;
       }
-
       .legend-light {
         color: #bdc1c6;
         /* font-family: Arial, Helvetica, sans-serif; */
@@ -655,41 +793,48 @@ export class LightningDetectorCard extends LitElement {
         font-weight: bold;
       }
 
+      .ring7-det {
+        position: absolute;
+        top: 50%;
+        left: 10.5%;
+        transform: translate(-50%, -50%);
+      }
+      .ring6-det {
+        position: absolute;
+        top: 50%;
+        left: 16%;
+        transform: translate(-50%, -50%);
+      }
       .ring5-det {
         position: absolute;
         top: 50%;
-        left: 13.5%;
+        left: 11.52%;
         transform: translate(-50%, -50%);
       }
-
       .ring4-det {
         position: absolute;
         top: 50%;
-        left: 20%;
+        left: 18.64%;
         transform: translate(-50%, -50%);
       }
-
       .ring3-det {
         position: absolute;
         top: 50%;
-        left: 26.75%;
+        left: 25.76%;
         transform: translate(-50%, -50%);
       }
-
       .ring2-det {
         position: absolute;
         top: 50%;
-        left: 33.5%;
+        left: 32.88%;
         transform: translate(-50%, -50%);
       }
-
       .ring1-det {
         position: absolute;
         top: 50%;
         left: 40%;
         transform: translate(-50%, -50%);
       }
-
       .ring0-det {
         position: absolute;
         top: 46%;

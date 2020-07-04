@@ -15,6 +15,7 @@
   "author": "Stephen Moraco <stephen@ironsheep.biz>",
   "license": "MIT",
   "dependencies": {
+    "@ctrl/tinycolor": "^2.6.1",
     "custom-card-helpers": "^1.6.3",
     "home-assistant-js-websocket": "^4.4.0",
     "lit-element": "^2.2.1",

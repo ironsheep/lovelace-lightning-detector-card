@@ -27,6 +27,7 @@ export interface LightningDetectorCardConfig extends LovelaceCardConfig {
   light_color?: string;
   medium_color?: string;
   heavy_color?: string;
+  ring_no_color?: string;
   background_color?: string;
   light_text_color?: string;
   dark_text_color?: string;

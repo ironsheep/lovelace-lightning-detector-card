@@ -113,12 +113,6 @@ export class LightningDetectorCard extends LitElement {
     console.log(this._config);
   }
 
-  // The height this card.  Home Assistant uses this to automatically
-  // distribute all cards over the available columns.
-  //public getCardSize(): number {
-  //  return 5;
-  //}
-
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     if (changedProps.has('_config')) {
       return true;
@@ -163,7 +157,7 @@ export class LightningDetectorCard extends LitElement {
 
       // set timer so our card updates timestamp every 5 seconds
       // FIXME: UNDONE remember to clear this interval when entity NOT avail. and restore when comes avail again...
-      setInterval(() => this._updateTime(), 5000);
+      setInterval(() => this._updateCardTimeStamp(), 5000);
 
       // set initial config values from entity, too
       this._config.units = stateObj?.attributes[Constants.RINGSET_UNITS_KEY];
@@ -220,7 +214,7 @@ export class LightningDetectorCard extends LitElement {
           <div class="rings">${this._config.ringsImage} ${this._config.ringsLegend} ${this._config.ringsTitles}</div>
           ${this._config.cardText}
         </div>
-        <div id="lightning-timestamp" class="last-heard legend-light">Last report: ${relativeInterp}!</div>
+        <div id="card-timestamp" class="last-heard">Last report: ${relativeInterp}!</div>
       </ha-card>
     `;
   }
@@ -250,37 +244,42 @@ export class LightningDetectorCard extends LitElement {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const interpLabels: string[] = this._calcCardDetailText(this._config.ring_count!);
     labelElement = root.getElementById('card-detail');
-    labelElement.textContent = interpLabels.join('\r\n'); // in HTML would be </ br>
+    //labelElement.textContent = interpLabels; // in HTML would be </ br>
 
     // update card content
     //
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     for (let ring_index = 0; ring_index <= this._config.ring_count!; ring_index++) {
       // adjust ring detections count and color
-      let label_id = this._countLabelIdFromRingIndex(ring_index);
-      const currRingDictionary = this._ringDictionary(ring_index);
+      let label_id = this._calcCountLabelIdFromRingIndex(ring_index);
+      const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const currCount = currRingDictionary[Constants.RING_COUNT_KEY];
       let labelElement = root.getElementById(label_id);
       labelElement.textContent = currCount;
-      const currTextColor = currCount > 0 ? this._config.dark_text_color : this._config.light_text_color;
+      //const currTextColor = currCount > 0 ? this._config.dark_text_color : this._config.light_text_color;  // <--- DIDN'T WORK (illegal? color value)
+      // FIXME: UNDONE get better colors here... and match theme...
+      const currTextColor = currCount > 0 ? '#000' : '#fff';
       labelElement.style.setProperty('color', currTextColor);
       // adjust ring distances color
-      label_id = this._distanceLabelIdFromRingIndex(ring_index);
+      label_id = this._calcDistanceLabelIdFromRingIndex(ring_index);
       labelElement = root.getElementById(label_id);
-      labelElement.style.setProperty('color', currTextColor);
+      labelElement.style.setProperty('div#color', currTextColor);
       // adjust ring color
-      const ring_id = this._ringIdFromRingIndex(ring_index);
-      const currEnergy = currRingDictionary[Constants.RING_ENERGY_KEY];
+      const ring_id = this._calcRingIdFromRingIndex(ring_index);
       const ringElement = root.getElementById(ring_id);
-      const currRingColor = this._computeRingColor(currEnergy, currCount);
+      const currRingColor = this._calcRingColor(ring_index);
       ringElement.style.setProperty('fill', currRingColor);
     }
   }
 
-  private _updateTime(): void {
+  // ===========================================================================
+  //  PRIVATE (utility) functions
+  // ---------------------------------------------------------------------------
+
+  private _updateCardTimeStamp(): void {
     // call when time to refresh our card's relative time for last report
     const root: any = this.shadowRoot;
-    const labelElement = root.getElementById('lightning-timestamp');
+    const labelElement = root.getElementById('card-timestamp');
     const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
@@ -290,7 +289,7 @@ export class LightningDetectorCard extends LitElement {
     labelElement.textContent = newLabel;
   }
 
-  private _ringsEntry(key: string): string {
+  private _getRingValueForKey(key: string): string {
     const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
     let ring_value: string = '';
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -300,7 +299,7 @@ export class LightningDetectorCard extends LitElement {
     return ring_value;
   }
 
-  private _ringDictionary(ring_index: number): object {
+  private _getRingDictionaryForRingIndex(ring_index: number): object {
     const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
     const ring_key: string = 'ring' + ring_index;
     let ringDictionary: object = {};
@@ -311,15 +310,18 @@ export class LightningDetectorCard extends LitElement {
     return ringDictionary;
   }
 
-  private _ringColorClass(ring_index: number): string {
-    const ringDictionary = this._ringDictionary(ring_index);
+  private _calcRingColorClass(ring_index: number): string {
+    if (ring_index) {
+    } // kill compiler detected error
+    //const ringDictionary = this._getRingDictionaryForRingIndex(ring_index);
     // color class
     //   high-detections, medium-detections, low-detections, no-detections
     //   high-power, medium-power, low-power, no-power
-    const count: number = ringDictionary[Constants.RING_COUNT_KEY];
-    const energy: number = ringDictionary[Constants.RING_ENERGY_KEY];
+    //const count: number = ringDictionary[Constants.RING_COUNT_KEY];
+    //const energy: number = ringDictionary[Constants.RING_ENERGY_KEY];
     // encode our detectins count
-    let colorCountClass: string = 'no-detections';
+    const colorCountClass: string = 'no-detections';
+    /*
     if (count > 10) {
       colorCountClass = 'high-detections';
     } else if (count > 3) {
@@ -327,8 +329,10 @@ export class LightningDetectorCard extends LitElement {
     } else if (count > 0) {
       colorCountClass = 'low-detections';
     }
+    */
     // encode our energy level
-    let colorEnergyClass: string = 'no-power';
+    const colorEnergyClass: string = 'no-power';
+    /*
     if (energy > 10) {
       colorEnergyClass = 'high-power';
     } else if (energy > 3) {
@@ -336,12 +340,59 @@ export class LightningDetectorCard extends LitElement {
     } else if (energy > 0) {
       colorEnergyClass = 'low-power';
     }
+    */
     // combine the two and return the new class
     const colorClass = colorCountClass + ' ' + colorEnergyClass;
     return colorClass;
   }
 
-  private _circleRadius(ring_index: number, ring_count: number): string {
+  private _calcRingColor(ring_index: number): string {
+    const ringDictionary = this._getRingDictionaryForRingIndex(ring_index);
+    // color class
+    //   high-detections, medium-detections, low-detections, no-detections
+    //   high-power, medium-power, low-power, no-power
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    let color = this._config.ring_no_color!;
+    const count: number = ringDictionary[Constants.RING_COUNT_KEY];
+    if (count > 0) {
+      const energy: number = ringDictionary[Constants.RING_ENERGY_KEY];
+
+      // encode our detectins count
+      let hue = 9;
+      if (count > 10) {
+        // red #FF0000
+        hue = 9;
+      } else if (count > 3) {
+        // orange #FF7F00
+        hue = 35;
+      } else if (count > 0) {
+        // yellow #FFFF00
+        hue = 59;
+      }
+
+      // encode our energy level
+      let saturation = 1;
+
+      if (energy > 200000) {
+        saturation = 1;
+      } else if (energy > 100000) {
+        saturation = 0.75;
+      } else if (energy > 0) {
+        saturation = 0.45;
+      }
+
+      let luminance = 0.5;
+
+      // Multiply l and s by 100
+      saturation = +(saturation * 100).toFixed(1);
+      luminance = +(luminance * 100).toFixed(1);
+      // combine the two and return the new class
+      color = 'hsl(' + hue + ',' + saturation + '%,' + luminance + '%)';
+    }
+    return color;
+  }
+
+  private _calcCircleRadius(ring_index: number, ring_count: number): string {
     const total_segment_widths = ring_count * 2 + 2; // +2 for center - total widths are...
     const ring_diameter = ring_index * 2 + 2; // and this ring dia is...
     const diameter_percent = (ring_diameter / total_segment_widths) * 0.85; // 0.85 = 85% of width
@@ -349,7 +400,19 @@ export class LightningDetectorCard extends LitElement {
     return radius.toFixed(1);
   }
 
-  private _ringIdFromRingIndex(ring_index: number): string {
+  private _calcDistanceLabelIdFromRingIndex(ring_index: number): string {
+    // return the ID for a given ring distanceLabel
+    const label_id: string = 'dist-ring' + ring_index + '-id';
+    return label_id;
+  }
+
+  private _calcCountLabelIdFromRingIndex(ring_index: number): string {
+    // return the ID for a given ring detection count Label
+    const label_id: string = 'ct-ring' + ring_index + '-id';
+    return label_id;
+  }
+
+  private _calcRingIdFromRingIndex(ring_index: number): string {
     // return the ID for a given ring
     return 'ring' + ring_index;
   }
@@ -361,9 +424,9 @@ export class LightningDetectorCard extends LitElement {
     const ringClassArray: string[] = [];
     const ringRadiusArray: string[] = [];
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const ringColorClass: string = this._ringColorClass(ring_index);
+      const ringColorClass: string = this._calcRingColorClass(ring_index);
       ringClassArray.push(ringColorClass);
-      const ringRadius: string = this._circleRadius(ring_index, ring_count);
+      const ringRadius: string = this._calcCircleRadius(ring_index, ring_count);
       ringRadiusArray.push(ringRadius);
     }
 
@@ -450,54 +513,38 @@ export class LightningDetectorCard extends LitElement {
       `,
     );
 
-    const units_string: string = this._ringsEntry(Constants.RINGSET_UNITS_KEY);
+    const units_string: string = this._getRingValueForKey(Constants.RINGSET_UNITS_KEY);
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const currRingDictionary = this._ringDictionary(ring_index);
+      const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const count = currRingDictionary[Constants.RING_COUNT_KEY];
       const darkness = count == 0 ? 'light' : 'dark';
       const label_darkness: string = 'label-' + darkness;
-      if (ring_index > 0) {
-        const from_dist = currRingDictionary[Constants.RING_FROM_UNITS_KEY];
-        const to_dist = currRingDictionary[Constants.RING_TO_UNITS_KEY];
-        const ring_distance_label: string = from_dist + ' - ' + to_dist + ' ' + units_string;
-        const ring_class: string = 'ring' + ring_index + '-dist';
-        const ring_dist_id: string = this._distanceLabelIdFromRingIndex(ring_index);
-        labelsArray.push(html`
-          <div id="${ring_dist_id}" class="${ring_class} ${label_darkness}">${ring_distance_label}</div>
-        `);
-      } else {
-        const ring_dist_id: string = this._distanceLabelIdFromRingIndex(0);
-        labelsArray.push(
-          html`
-            <div id="${ring_dist_id}" class="ring0 centered ${label_darkness}">Overhead</div>
-          `,
-        );
+
+      const from_dist = currRingDictionary[Constants.RING_FROM_UNITS_KEY];
+      const to_dist = currRingDictionary[Constants.RING_TO_UNITS_KEY];
+      let ring_distance_label: string = from_dist + ' - ' + to_dist + ' ' + units_string;
+      let ring_class: string = 'ring' + ring_index + '-dist';
+      if (ring_index == 0) {
+        ring_distance_label = 'Overhead';
+        ring_class = 'ring0 centered';
       }
+      const ring_dist_id: string = this._calcDistanceLabelIdFromRingIndex(ring_index);
+      labelsArray.push(html`
+        <div id="${ring_dist_id}" class="${ring_class} ${label_darkness}">${ring_distance_label}</div>
+      `);
     }
     return labelsArray;
-  }
-
-  private _distanceLabelIdFromRingIndex(ring_index: number): string {
-    // return the ID for a given ring distanceLabel
-    const label_id: string = 'dist-ring' + ring_index + '-id';
-    return label_id;
-  }
-
-  private _countLabelIdFromRingIndex(ring_index: number): string {
-    // return the ID for a given ring detection count Label
-    const label_id: string = 'ct-ring' + ring_index + '-id';
-    return label_id;
   }
 
   private _createRingLabels(ring_count: number): TemplateResult[] {
     const labelsArray: TemplateResult[] = [];
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const currRingDictionary = this._ringDictionary(ring_index);
+      const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const ring_class: string = 'ring' + ring_index + '-det';
       const count = currRingDictionary[Constants.RING_COUNT_KEY];
       const darkness = count == 0 ? 'light' : 'dark';
       const label_darkness: string = 'label-' + darkness;
-      const label_ct_id = this._countLabelIdFromRingIndex(ring_index);
+      const label_ct_id = this._calcCountLabelIdFromRingIndex(ring_index);
       labelsArray.push(html`
         <div id="${label_ct_id}" class="${ring_class} ${label_darkness}">${count}</div>
       `);
@@ -510,11 +557,11 @@ export class LightningDetectorCard extends LitElement {
     const kMaxNotSet = -1;
     let min_ring_dist = kMinNotSet;
     let max_ring_dist = kMaxNotSet;
-    const units_string: string = this._ringsEntry(Constants.RINGSET_UNITS_KEY);
-    const out_of_range: number = parseInt(this._ringsEntry(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
+    const units_string: string = this._getRingValueForKey(Constants.RINGSET_UNITS_KEY);
+    const out_of_range: number = parseInt(this._getRingValueForKey(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
     let total_count = out_of_range;
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const currRingDictionary = this._ringDictionary(ring_index);
+      const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const count = currRingDictionary[Constants.RING_COUNT_KEY];
       total_count += count;
       if (count > 0) {
@@ -541,20 +588,20 @@ export class LightningDetectorCard extends LitElement {
 
   private _calcCardDetailText(ring_count: number): string[] {
     const distancesStringArray: string[] = [];
-    const out_of_range: number = parseInt(this._ringsEntry(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
+    const out_of_range: number = parseInt(this._getRingValueForKey(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
     if (out_of_range > 0) {
       const interp_label = out_of_range + ' detections, out-of-range';
       distancesStringArray.push(interp_label);
     }
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const currRingDictionary = this._ringDictionary(ring_index);
+      const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const energy = currRingDictionary[Constants.RING_ENERGY_KEY];
       const count = currRingDictionary[Constants.RING_COUNT_KEY];
       if (count > 0) {
         let max_power_interp = '200k';
         const energy_in_k: number = Math.round(energy / 10000) * 10;
         if (energy_in_k > 5) {
-          max_power_interp = energy_in_k + 'k +';
+          max_power_interp = energy_in_k + 'k+';
         } else {
           max_power_interp = '< 5k';
         }
@@ -650,14 +697,14 @@ export class LightningDetectorCard extends LitElement {
         padding: 0px;
       }
       .card-content {
-        padding: 80px 0px 0px 0px; /* NOTE: we add +16 to top pad so we have space at top of card when no-name! */
+        padding: 120px 0px 0px 0px; /* NOTE: we add +16 to top pad so we have space at top of card when no-name! */
         margin: 0px 0px 0px 0px; /* NOTE: top should be -16 if name is present */
         display: block;
         /*background-color: yellow;*/
         position: relative; /* ensure descendant abs-objects are relative this? */
       }
       .rings {
-        /*background-color: green;*/
+        /* background-color: green; */
         /*padding: 0px;*/
         position: relative; /* ensure descendant abs-objects are relative this? */
         margin: 0px;
@@ -729,19 +776,20 @@ export class LightningDetectorCard extends LitElement {
         font-size: 16px;
         line-height: 19px;
         /* color: #8c8c8c; */
+        color: var(--primary-text-color);
       }
 
       .interp-text {
         position: absolute;
-        top: 30px;
+        top: 36px;
         left: 10px;
         /* font-family: Arial, Helvetica, sans-serif; */
         font-style: normal;
-        font-weight: bold;
         font-size: 12px;
         line-height: 15px;
         /* color: #8c8c8c; */
         text-align: right;
+        color: var(--secondary-text-color);
       }
 
       /* Centered text */
@@ -807,7 +855,7 @@ export class LightningDetectorCard extends LitElement {
       /* bottom center */
       .distance-legend {
         position: absolute;
-        bottom: 1%;
+        bottom: 0.5%;
         left: 50%;
         transform: translate(-50%, -50%);
       }
@@ -828,6 +876,14 @@ export class LightningDetectorCard extends LitElement {
         color: #bdc1c6;
         /* font-family: Arial, Helvetica, sans-serif; */
         font-size: 9px;
+      }
+
+      .last-heard {
+        position: absolute;
+        bottom: 5px;
+        left: 10px;
+        font-size: 12px;
+        color: var(--secondary-text-color);
       }
 
       .legend-dark {
@@ -957,7 +1013,7 @@ export class LightningDetectorCard extends LitElement {
 
     return 'rgb(' + +r + ',' + +g + ',' + +b + ')';
   }
-  private _RGBtoHSL(red: number, green: number, blue: number): string {
+  private _RGBtoHSLOverrideSaturation(red: number, green: number, blue: number, saturationOverride: number): string {
     // Make r, g, and b fractions of 1
     red /= 255;
     green /= 255;
@@ -995,6 +1051,10 @@ export class LightningDetectorCard extends LitElement {
     // Multiply l and s by 100
     s = +(s * 100).toFixed(1);
     l = +(l * 100).toFixed(1);
+
+    if (saturationOverride > 0) {
+      s = +(saturationOverride * 100).toFixed(1);
+    }
 
     return 'hsl(' + h + ',' + s + '%,' + l + '%)';
   }

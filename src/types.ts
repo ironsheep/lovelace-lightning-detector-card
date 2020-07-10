@@ -16,6 +16,7 @@ export interface LightningDetectorCardConfig extends LovelaceCardConfig {
   out_of_range_count?: number;
   ring_count?: number;
   ring_width?: number;
+  detail_label_count?: number;
   // display values for each ring
   ringsImage?: TemplateResult[];
   ringsLegend?: TemplateResult[];

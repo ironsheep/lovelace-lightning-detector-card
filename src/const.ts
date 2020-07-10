@@ -3,8 +3,12 @@ export const CARD_VERSION = '0.2.0';
 export const RINGSET_PAST_TOPNAME = 'prings';
 export const RINGSET_CURRENT_TOPNAME = 'crings';
 
-export const RINGSET_TIMESTAMP_KEY = 'timestamp';
-export const RINGSET_LAST_DETECTION_KEY = 'last'; // [optional] may not be present
+export const RINGSET_TIMESTAMP_KEY = 'timestamp'; // time ring report was created
+export const RINGSET_LAST_DETECTION_KEY = 'last'; // [optional] may not be present (not here when no detections in this 'period_minutes')
+export const RINGSET_FIRST_DETECTION_KEY = 'first'; // [optional] may not be present (not here when no detections in this 'period_minutes')
+export const RINGSET_STORM_LAST_KEY = 'storm_last';
+export const RINGSET_STORM_FIRST_KEY = 'storm_first';
+
 export const RINGSET_PERIOD_MINUTES_KEY = 'period_minutes';
 export const RINGSET_UNITS_KEY = 'units';
 export const RINGSET_OUT_OF_RANGE_KEY = 'out_of_range';

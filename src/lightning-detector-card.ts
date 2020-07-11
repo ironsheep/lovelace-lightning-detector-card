@@ -64,6 +64,7 @@ export class LightningDetectorCard extends LitElement {
   @property() private _storm_active: boolean = false;
   @property() private _entity_online: boolean = false;
   @property() private _updateTimerID: NodeJS.Timeout | undefined;
+  @property() private _latestDetectionLabelID: string = '';
 
   public setConfig(config: LightningDetectorCardConfig): void {
     // TODO Check for required fields and that they are of the proper format
@@ -432,29 +433,29 @@ export class LightningDetectorCard extends LitElement {
       const energy_low = 0;
 
       // encode our detections count & energy
-      if (count > detections_high) {
+      if (count >= detections_high) {
         // reds
-        if (energy > energy_high) {
+        if (energy >= energy_high) {
           color = '#ff2600';
-        } else if (energy > energy_medium) {
+        } else if (energy >= energy_medium) {
           color = '#ff7158';
         } else if (energy > energy_low) {
           color = '#ff9d8b';
         }
-      } else if (count > detections_medium) {
+      } else if (count >= detections_medium) {
         // oranges
-        if (energy > energy_high) {
+        if (energy >= energy_high) {
           color = '#ff9300';
-        } else if (energy > energy_medium) {
+        } else if (energy >= energy_medium) {
           color = '#ffba5a';
         } else if (energy > energy_low) {
           color = '#ffce8c';
         }
-      } else if (count > detections_low) {
+      } else if (count >= detections_low) {
         // yellows
-        if (energy > energy_high) {
+        if (energy >= energy_high) {
           color = '#fffb00';
-        } else if (energy > energy_medium) {
+        } else if (energy >= energy_medium) {
           color = '#fffc54';
         } else if (energy > energy_low) {
           color = '#fffd8b';
@@ -892,9 +893,7 @@ export class LightningDetectorCard extends LitElement {
       .high {
         fill: #d45f62;
       }
-      .none {
-        fill: #252629;
-      }
+
       .no-detections.no-power {
         fill: #252629;
       }
@@ -944,11 +943,19 @@ export class LightningDetectorCard extends LitElement {
       }
       .substatus-text-ln1 {
         position: absolute;
-        top: 57px;
+        top: 56px;
       }
       .substatus-text-ln2 {
         position: absolute;
-        top: 76px;
+        top: 72px;
+      }
+      .substatus-text-ln3 {
+        position: absolute;
+        top: 88px;
+      }
+      .substatus-text-ln4 {
+        position: absolute;
+        top: 104px;
       }
       .substatus-text {
         position: absolute;

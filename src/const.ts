@@ -14,9 +14,12 @@ export const RINGSET_UNITS_KEY = 'units';
 export const RINGSET_OUT_OF_RANGE_KEY = 'out_of_range';
 export const RINGSET_RING_COUNT_KEY = 'ring_count';
 export const RINGSET_RING_WIDTH_KM_KEY = 'ring_width_km';
+export const RINGSET_STORM_END_MINUTES_KEY = 'end_minutes';
 
 export const RING_COUNT_KEY = 'count';
 export const RING_DISTANCE_KM_KEY = 'distance_km';
 export const RING_FROM_UNITS_KEY = 'from_units';
 export const RING_TO_UNITS_KEY = 'to_units';
 export const RING_ENERGY_KEY = 'energy';
+
+export const MAX_SUBSTATUS_LINES = 5; // card settings constraints

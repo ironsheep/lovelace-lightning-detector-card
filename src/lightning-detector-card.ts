@@ -330,17 +330,17 @@ export class LightningDetectorCard extends LitElement {
       //
       //  Update top-right of card
       //
-      // NOT our problem cause!!!
-
       if (this._latestDetectionLabelID != '') {
         const labelElement = root.getElementById(this._latestDetectionLabelID);
-        const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
-        let detectionInterp: string = 'None this period';
-        if (mostRecentDetection != '') {
-          detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
+        if (labelElement != undefined) {
+          const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
+          let detectionInterp: string = 'None this period';
+          if (mostRecentDetection != '') {
+            detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
+          }
+          const newLabel = 'Latest: ' + detectionInterp;
+          labelElement.textContent = newLabel;
         }
-        const newLabel = 'Latest: ' + detectionInterp;
-        labelElement.textContent = newLabel;
       }
 
       //
@@ -705,17 +705,19 @@ export class LightningDetectorCard extends LitElement {
       const relativeInterp = relativeTime(new Date(stormStartTimestamp), this.hass?.localize);
       subStringArray.push('Started: ' + relativeInterp); // [0]
 
-      //this._latestDetectionLabelID = '';
       let detectionInterp: string = 'None this period';
       if (mostRecentDetection != '') {
         detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
         detectionsThisPeriod = true;
       }
       subStringArray.push('Latest: ' + detectionInterp); // [1]
-      //const lblIndex = subStringArray.length - 1;
-      //this._latestDetectionLabelID = 'card-substatus' + lblIndex;
+      const lblIndex = subStringArray.length - 1;
+      this._latestDetectionLabelID = 'card-substatus' + lblIndex;
+      //console.log('- _latestDetectionLabelID:');
+      //console.log(this._latestDetectionLabelID);
     } else {
       subStringArray.push('Detector not yet reporting'); // [0]
+      this._latestDetectionLabelID = '';
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

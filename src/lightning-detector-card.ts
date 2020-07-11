@@ -185,8 +185,6 @@ export class LightningDetectorCard extends LitElement {
       this._firstTime = false;
     }
 
-    this._updateAvailability();
-
     // logic
     //  if rings change re-layout rings
     const new_ring_count = stateObj?.attributes[Constants.RINGSET_RING_COUNT_KEY];
@@ -237,35 +235,6 @@ export class LightningDetectorCard extends LitElement {
     `;
   }
 
-  private _updateAvailability(): void {
-    const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
-    const newOnline: boolean = stateObj?.state != 'unavailable' ? true : false;
-    const didChange: boolean = newOnline != this._entity_online;
-    this._entity_online = newOnline;
-    if (newOnline == true && didChange) {
-      this._updateEntityArrived();
-    } else if (newOnline == false && didChange) {
-      this._updateEntityLeft();
-    }
-  }
-
-  private _updateEntityArrived(): void {
-    // save values from sensor
-  }
-
-  private _updateEntityLeft(): void {
-    // clear past values from sensor
-    this._config.ring_count = 0;
-    this._config.units = '';
-    this._firstTime = true; // setup so we start over...
-
-    // stop our referesh timer...
-    if (this._updateTimerID) {
-      clearInterval(this._updateTimerID);
-      this._updateTimerID = undefined;
-    }
-  }
-
   // Here we need to refresh the rings and titles after it has been initially rendered
   protected updated(changedProps): void {
     if (!this._config) {
@@ -279,8 +248,6 @@ export class LightningDetectorCard extends LitElement {
         applyThemesOnElement(this, this.hass.themes, this._config.theme);
       }
     }
-
-    this._updateAvailability();
 
     const root: any = this.shadowRoot;
 

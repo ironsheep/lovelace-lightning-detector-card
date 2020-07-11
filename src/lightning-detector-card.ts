@@ -57,7 +57,7 @@ export class LightningDetectorCard extends LitElement {
 
   NOT_SET: number = -1;
 
-  // TODO Add any properities that should cause your element to re-render here
+  // Properties that should cause our element to re-render
   @property() private hass!: HomeAssistant;
   @property() private _config!: LightningDetectorCardConfig;
   @property() private _period_minutes: number = 0;
@@ -66,13 +66,13 @@ export class LightningDetectorCard extends LitElement {
   @property() private _entity_online: boolean = false;
   @property() private _ring_count: number = 0;
   @property() private _ring_units: string = '';
-  @property() private _stormEndDate: Date | undefined = undefined;
 
   // and those that don't cause a re-render
   private _firstTime: boolean = true;
   private _updateTimerID: NodeJS.Timeout | undefined;
   private _latestDetectionLabelID: string = '';
   private _endOfStormLabelID: string = '';
+  private _stormEndDate: Date | undefined = undefined;
 
   public setConfig(config: LightningDetectorCardConfig): void {
     // TODO Check for required fields and that they are of the proper format
@@ -92,10 +92,6 @@ export class LightningDetectorCard extends LitElement {
       name: undefined,
       ...config,
     };
-
-    //   const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
-    //   console.log('- stateObj:');
-    //   console.log(stateObj);
 
     if (!config.light_color) {
       this._config.light_color = 'd3d29b'; // yellow
@@ -804,7 +800,7 @@ export class LightningDetectorCard extends LitElement {
   }
 
   private _getTextCardSubStatus(): string[] {
-    // SubStatus is 3 labels at top right of card (primary color. smaller font)
+    // SubStatus is 5 labels at top right of card (secondary color. smaller font)
     // SHOWS: storm status information
     //
     //   Storm Started: {time since}
@@ -832,6 +828,7 @@ export class LightningDetectorCard extends LitElement {
       const lblIndex = subStringArray.length - 1;
       const tmpLabel = 'card-substatus' + lblIndex;
       this._latestDetectionLabelID = tmpLabel;
+      this._stormEndDate = undefined; // back out possible end setup
     } else {
       subStringArray.push('Detector not yet reporting'); // [0]
       this._latestDetectionLabelID = '';
@@ -857,7 +854,9 @@ export class LightningDetectorCard extends LitElement {
       }
     }
     if (detectionsThisPeriod == false && isPastRingset == false) {
-      // show storm end in minutes and when it will end if no more detections (but only for current ring-set)
+      // show storm end in minutes and when it will end
+      //  - IF THERE ARE NO MORE detections
+      //  - only for 'current' ring-set
       if (this._stormEndDate == undefined) {
         this._stormEndDate = this._calcStormEndDate();
       }
@@ -868,7 +867,7 @@ export class LightningDetectorCard extends LitElement {
         const lblIndex = subStringArray.length - 1;
         const tmpLabelID = 'card-substatus' + lblIndex;
         this._endOfStormLabelID = tmpLabelID;
-        subStringArray.push(this._getUiDateTimeForTimestamp(this._stormEndDate));
+        subStringArray.push('at: ' + this._getUiDateTimeForTimestamp(this._stormEndDate));
       } else {
         this._endOfStormLabelID = '';
         if (stormStartTimestamp != '') {
@@ -880,9 +879,9 @@ export class LightningDetectorCard extends LitElement {
   }
 
   private _getTextCardDetail(ring_count: number): string[] {
-    // DetailText is ring_count + 1 labels at top left of card (2ndary color)
+    // DetailText is ring_count + 1 labels at top left of card (primary color)
     //  SHOWS: detection detail (additional info supporting ring coloring)
-    //  When NO DECTIONS in period, show last of storm date/time
+    //  When NO DECTIONS in period, show storm date/time of last detection
     const distancesStringArray: string[] = [];
     const out_of_range: number = parseInt(this._getRingValueForKey(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
     if (out_of_range > 0) {
@@ -919,6 +918,7 @@ export class LightningDetectorCard extends LitElement {
   }
 
   private _getUiDateTimeForTimestamp(timestamp: Date): string {
+    // format a timestamp in human readable form
     const uiDateOptions = {
       weekday: 'short',
       month: 'short',

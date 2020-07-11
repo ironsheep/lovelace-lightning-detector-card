@@ -465,6 +465,18 @@ export class LightningDetectorCard extends LitElement {
     return radius.toFixed(1);
   }
 
+  private _calcStormEndDate(): Date | undefined {
+    // our storm end is 'last detection' plus 'storm end minutes' as reported via MQTT
+    let predictedStormEnd: Date | undefined = undefined;
+    const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_STORM_LAST_KEY);
+    const stormEndInMinutes: number = parseInt(this._getRingValueForKey(Constants.RINGSET_STORM_END_MINUTES_KEY), 10);
+    if (mostRecentDetection != '' && mostRecentDetection != '') {
+      const detectionAsDate = new Date(mostRecentDetection);
+      predictedStormEnd = new Date(detectionAsDate.getTime() + stormEndInMinutes * 60000);
+    }
+    return predictedStormEnd;
+  }
+
   private _calcDistanceLabelIdFromRingIndex(ring_index: number): string {
     // return the ID for a given ring distanceLabel
     const label_id: string = 'dist-ring' + ring_index + '-id';
@@ -741,11 +753,11 @@ export class LightningDetectorCard extends LitElement {
       }
     }
     if (detectionsThisPeriod == false && isPastRingset == false) {
-      // show storm end in minutes and when it will end if no more (but only for current ring-set)
-      const stormEndInMinutes = this._getRingValueForKey(Constants.RINGSET_STORM_END_MINUTES_KEY);
+      // show storm end in minutes and when it will end if no more detections (but only for current ring-set)
       const predictedStormEnd = this._calcStormEndDate();
       if (predictedStormEnd != undefined) {
-        subStringArray.push('Ends in ' + stormEndInMinutes + ' minutes:');
+        const endInterp = relativeTime(new Date(predictedStormEnd), this.hass?.localize);
+        subStringArray.push('Ends: ' + endInterp);
         subStringArray.push(predictedStormEnd.toLocaleTimeString('en-us', uiDateOptions));
       } else {
         if (stormStartTimestamp != '') {
@@ -754,17 +766,6 @@ export class LightningDetectorCard extends LitElement {
       }
     }
     return subStringArray;
-  }
-
-  private _calcStormEndDate(): Date | undefined {
-    let predictedStormEnd: Date | undefined = undefined;
-    const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_STORM_LAST_KEY);
-    const stormEndInMinutes: number = parseInt(this._getRingValueForKey(Constants.RINGSET_STORM_END_MINUTES_KEY), 10);
-    if (mostRecentDetection != '' && mostRecentDetection != '') {
-      const detectionAsDate = new Date(mostRecentDetection);
-      predictedStormEnd = new Date(detectionAsDate.getTime() + stormEndInMinutes * 60000);
-    }
-    return predictedStormEnd;
   }
 
   private _createCardDetailText(ring_count: number): string[] {

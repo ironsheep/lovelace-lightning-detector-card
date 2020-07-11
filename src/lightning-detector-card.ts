@@ -64,14 +64,15 @@ export class LightningDetectorCard extends LitElement {
   @property() private _storm_active: boolean = false;
   @property() private _storm_ended: boolean = false;
   @property() private _entity_online: boolean = false;
-
-  @property() private _latestDetectionLabelID: string = '';
-  @property() private _endOfStormLabelID: string = '';
+  @property() private _ring_count: number = 0;
+  @property() private _ring_units: string = '';
   @property() private _stormEndDate: Date | undefined = undefined;
 
   // and those that don't cause a re-render
   private _firstTime: boolean = true;
   private _updateTimerID: NodeJS.Timeout | undefined;
+  private _latestDetectionLabelID: string = '';
+  private _endOfStormLabelID: string = '';
 
   public setConfig(config: LightningDetectorCardConfig): void {
     // TODO Check for required fields and that they are of the proper format
@@ -128,6 +129,8 @@ export class LightningDetectorCard extends LitElement {
   }
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
+    //return hasConfigOrEntityChanged(this, changedProps, false);
+
     if (changedProps.has('_config')) {
       return true;
     }
@@ -171,7 +174,7 @@ export class LightningDetectorCard extends LitElement {
 
       // set timer so our card updates timestamp every 5 seconds : 5000 (1 second: 1000)
       // FIXME: UNDONE remember to clear this interval when entity NOT avail. and restore when comes avail again...
-      this._updateTimerID = setInterval(() => this._handleCardUpdateTimerExpiration(), 1000);
+      this._startCardRefreshTimer();
 
       // set initial config values from entity, too
       this._config.units = stateObj?.attributes[Constants.RINGSET_UNITS_KEY];
@@ -256,6 +259,15 @@ export class LightningDetectorCard extends LitElement {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const stateObj = this.hass!.states[this._config.entity!];
+    if (!stateObj) {
+      this._stopCardRefreshTimer();
+    }
+
+    console.log('- changed Props: ');
+    console.log(changedProps);
+
     const root: any = this.shadowRoot;
 
     // update card labels
@@ -268,19 +280,18 @@ export class LightningDetectorCard extends LitElement {
     const statusLabel: string = this._getTextCardStatus(ring_count);
     let labelElement = root.getElementById('card-status');
     labelElement.textContent = statusLabel;
-    const interpLabels: string[] = this._getTextCardDetail(ring_count);
 
     // Label: substatus Text
     //
     const nbr_substatus_labels = Constants.MAX_SUBSTATUS_LINES;
     const substatusLabels: string[] = this._getTextCardSubStatus();
-    //console.log('substatusLabels:');
-    //console.log(substatusLabels);
     for (let line_index = 0; line_index < nbr_substatus_labels; line_index++) {
       const label_id = this._calcSubstatusLabelIdFromLineIndex(line_index);
       let labelText: string = '';
-      if (line_index < substatusLabels.length) {
-        labelText = substatusLabels[line_index];
+      if (this._storm_ended == false) {
+        if (line_index < substatusLabels.length) {
+          labelText = substatusLabels[line_index];
+        }
       }
       const labelElement = root.getElementById(label_id);
       labelElement.textContent = labelText;
@@ -288,12 +299,15 @@ export class LightningDetectorCard extends LitElement {
 
     // LABELs: Detail Text
     //
+    const interpLabels: string[] = this._getTextCardDetail(ring_count);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const nbr_detail_labels: number = this._config.detail_label_count!;
     for (let line_index = 0; line_index < nbr_detail_labels; line_index++) {
       let labelText: string = '';
-      if (line_index < interpLabels.length) {
-        labelText = interpLabels[line_index];
+      if (this._storm_ended == false) {
+        if (line_index < interpLabels.length) {
+          labelText = interpLabels[line_index];
+        }
       }
       const label_id = this._calcDetailClassIdForIndex(line_index);
       labelElement = root.getElementById(label_id);
@@ -302,11 +316,13 @@ export class LightningDetectorCard extends LitElement {
 
     // update rings
     //
+    let detectionCount = parseInt(this._getRingValueForKey(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
       // adjust ring detections count and color
       let label_id = this._calcCountLabelIdFromRingIndex(ring_index);
       const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const currCount = currRingDictionary[Constants.RING_COUNT_KEY];
+      detectionCount += currCount;
       let labelElement = root.getElementById(label_id);
       labelElement.textContent = currCount;
       //const currTextColor = currCount > 0 ? this._config.dark_text_color : this._config.light_text_color;  // <--- DIDN'T WORK (illegal? color value)
@@ -323,91 +339,83 @@ export class LightningDetectorCard extends LitElement {
       const currRingColor = this._getColorForRing(ring_index);
       ringElement.style.setProperty('fill', currRingColor);
     }
+
+    if (detectionCount > 0) {
+      // if we have detections, we have a storm...
+      if (this._storm_ended == true) {
+        this._storm_ended = false;
+      }
+    }
   }
 
   // ===========================================================================
   //  PRIVATE (utility) functions
   // ---------------------------------------------------------------------------
 
-  private _handleCardUpdateTimerExpiration(): void {
-    // call when time to refresh our card's relative time for last report and last detection
-    const root: any = this.shadowRoot;
-    const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
-    if (stateObj != undefined) {
-      //
-      //  Update top-right of card - Latest Detection
-      //
-      if (this._latestDetectionLabelID != '') {
-        const labelElement = root.getElementById(this._latestDetectionLabelID);
-        if (labelElement != undefined) {
-          const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
-          let detectionInterp: string = 'None this period';
-          if (mostRecentDetection != '') {
-            detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
-          }
-          const newLabel = 'Latest: ' + detectionInterp;
-          labelElement.textContent = newLabel;
-        }
-      }
+  private _startCardRefreshTimer(): void {
+    this._updateTimerID = setInterval(() => this._handleCardUpdateTimerExpiration(), 1000);
+  }
 
-      //
-      //  Update top-right of card - Cuntdown to end-of-storm
-      //
-      if (this._endOfStormLabelID != '') {
-        const labelElement = root.getElementById(this._endOfStormLabelID);
-        if (labelElement != undefined && this._stormEndDate != undefined) {
-          const endInterp = relativeTime(new Date(this._stormEndDate), this.hass?.localize);
-          const newLabel = 'Ends: ' + endInterp;
-          labelElement.textContent = newLabel;
-        }
-      }
-      //
-      //  Update bottom of card
-      //
-      const labelElement = root.getElementById('card-timestamp');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
-      const relativeInterp =
-        stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
-      const newLabel = this._storm_active ? 'Last report: ' + relativeInterp : '';
-      labelElement.textContent = newLabel;
-    }
-
-    if (this._stormEndDate != undefined) {
-      // if it's time, empty our card, no more storm!
-      const timeNow: number = Date.now();
-      if (timeNow > this._stormEndDate.getTime()) {
-        this._displayStormEnd();
-      }
+  private _stopCardRefreshTimer(): void {
+    if (this._updateTimerID != undefined) {
+      clearInterval(this._updateTimerID);
+      this._updateTimerID = undefined;
     }
   }
 
-  private _displayStormEnd(): void {
-    // It's time, empty our card, no more storm!
-    const root: any = this.shadowRoot;
-    const emptyText: string = '';
-
-    // clear knowledge of our labels to be updated
-    this._endOfStormLabelID = '';
-    this._latestDetectionLabelID = '';
-
-    // Label: substatus Text
-    //
-    const nbr_substatus_labels = Constants.MAX_SUBSTATUS_LINES;
-    for (let line_index = 0; line_index < nbr_substatus_labels; line_index++) {
-      const label_id = this._calcSubstatusLabelIdFromLineIndex(line_index);
-      const labelElement = root.getElementById(label_id);
-      labelElement.textContent = emptyText;
+  private _handleCardUpdateTimerExpiration(): void {
+    // call when time to refresh our card's relative time for last report and last detection
+    if (this._stormEndDate != undefined && this._storm_ended == false) {
+      const dateNow = new Date();
+      // 'secondsBeforeStormEnd' is negative before storm end, positive after!
+      const secondsBeforeStormEnd = dateNow.getTime() / 1000 - this._stormEndDate.getTime() / 1000;
+      if (secondsBeforeStormEnd >= 0) {
+        this._storm_ended = true;
+      }
     }
 
-    // LABELs: Detail Text
-    //
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const nbr_detail_labels: number = this._config.detail_label_count!;
-    for (let line_index = 0; line_index < nbr_detail_labels; line_index++) {
-      const label_id = this._calcDetailClassIdForIndex(line_index);
-      const labelElement = root.getElementById(label_id);
-      labelElement.textContent = emptyText;
+    if (this._storm_ended == false) {
+      const root: any = this.shadowRoot;
+      const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
+      if (stateObj != undefined) {
+        //
+        //  Update top-right of card - Latest Detection
+        //
+        if (this._latestDetectionLabelID != '') {
+          const labelElement = root.getElementById(this._latestDetectionLabelID);
+          if (labelElement != undefined) {
+            const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
+            let detectionInterp: string = 'None this period';
+            if (mostRecentDetection != '') {
+              detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
+            }
+            const newLabel = 'Latest: ' + detectionInterp;
+            labelElement.textContent = newLabel;
+          }
+        }
+
+        //
+        //  Update top-right of card - Cuntdown to end-of-storm
+        //
+        if (this._endOfStormLabelID != '') {
+          const labelElement = root.getElementById(this._endOfStormLabelID);
+          if (labelElement != undefined && this._stormEndDate != undefined) {
+            const endInterp = relativeTime(new Date(this._stormEndDate), this.hass?.localize);
+            const newLabel = 'Ends: ' + endInterp;
+            labelElement.textContent = newLabel;
+          }
+        }
+        //
+        //  Update bottom of card
+        //
+        const labelElement = root.getElementById('card-timestamp');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
+        const relativeInterp =
+          stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
+        const newLabel = this._storm_active ? 'Last report: ' + relativeInterp : '';
+        labelElement.textContent = newLabel;
+      }
     }
   }
 
@@ -822,9 +830,8 @@ export class LightningDetectorCard extends LitElement {
       }
       subStringArray.push('Latest: ' + detectionInterp); // [1]
       const lblIndex = subStringArray.length - 1;
-      this._latestDetectionLabelID = 'card-substatus' + lblIndex;
-      //console.log('- _latestDetectionLabelID:');
-      //console.log(this._latestDetectionLabelID);
+      const tmpLabel = 'card-substatus' + lblIndex;
+      this._latestDetectionLabelID = tmpLabel;
     } else {
       subStringArray.push('Detector not yet reporting'); // [0]
       this._latestDetectionLabelID = '';
@@ -859,7 +866,8 @@ export class LightningDetectorCard extends LitElement {
         const endInterp = relativeTime(new Date(this._stormEndDate), this.hass?.localize);
         subStringArray.push('Ends: ' + endInterp);
         const lblIndex = subStringArray.length - 1;
-        this._endOfStormLabelID = 'card-substatus' + lblIndex;
+        const tmpLabelID = 'card-substatus' + lblIndex;
+        this._endOfStormLabelID = tmpLabelID;
         subStringArray.push(this._getUiDateTimeForTimestamp(this._stormEndDate));
       } else {
         this._endOfStormLabelID = '';

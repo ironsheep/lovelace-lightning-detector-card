@@ -298,7 +298,7 @@ export class LightningDetectorCard extends LitElement {
 
     // Label: Status Text
     //
-    const nbr_substatus_labels = 3;
+    const nbr_substatus_labels = Constants.MAX_SUBSTATUS_LINES;
     const substatusLabels: string[] = this._createCardSubStatusText();
     //console.log('substatusLabels:');
     //console.log(substatusLabels);
@@ -356,16 +356,37 @@ export class LightningDetectorCard extends LitElement {
   // ---------------------------------------------------------------------------
 
   private _updateCardTimeStamp(): void {
-    // call when time to refresh our card's relative time for last report
+    // call when time to refresh our card's relative time for last report and last detection
     const root: any = this.shadowRoot;
-    const labelElement = root.getElementById('card-timestamp');
     const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
-    const relativeInterp =
-      stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
-    const newLabel = this._storm_active ? 'Last report: ' + relativeInterp : '';
-    labelElement.textContent = newLabel;
+    if (stateObj != undefined) {
+      //
+      //  Update top-right of card
+      //
+      // NOT our problem cause!!!
+
+      if (this._latestDetectionLabelID != '') {
+        const labelElement = root.getElementById(this._latestDetectionLabelID);
+        const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
+        let detectionInterp: string = 'None this period';
+        if (mostRecentDetection != '') {
+          detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
+        }
+        const newLabel = 'Latest: ' + detectionInterp;
+        labelElement.textContent = newLabel;
+      }
+
+      //
+      //  Update bottom of card
+      //
+      const labelElement = root.getElementById('card-timestamp');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
+      const relativeInterp =
+        stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
+      const newLabel = this._storm_active ? 'Last report: ' + relativeInterp : '';
+      labelElement.textContent = newLabel;
+    }
   }
 
   private _getRingValueForKey(key: string): string {
@@ -513,82 +534,84 @@ export class LightningDetectorCard extends LitElement {
     //   NOTE: I was unable to find a working solution to programmaticaly generating these so i gave up and hard-coded
     //    the circles within the svg object.   ...sigh...
     const svgArray: TemplateResult[] = [];
-    const ringClassArray: string[] = [];
-    const ringRadiusArray: string[] = [];
-    for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const ringColorClass: string = this._calcRingColorClass(ring_index);
-      ringClassArray.push(ringColorClass);
-      const ringRadius: string = this._calcCircleRadius(ring_index, ring_count);
-      ringRadiusArray.push(ringRadius);
-    }
 
-    switch (ring_count) {
-      case 7:
-        // code block - 7 rings
-        svgArray.push(html`
-          <svg class="graphics" viewBox="0 0 10 10" width="100%">
-            <circle id="ring7" class="${ringClassArray[7]}" cx="5" cy="5" r="${ringRadiusArray[7]}" />
-            <circle id="ring6" class="${ringClassArray[6]}" cx="5" cy="5" r="${ringRadiusArray[6]}" />
-            <circle id="ring5" class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
-            <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
-            <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
-            <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
-            <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
-            <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
-          </svg>
-        `);
-        break;
-      case 6:
-        // code block - 6 rings
-        svgArray.push(html`
-          <svg class="graphics" viewBox="0 0 10 10" width="100%">
-            <circle id="ring7" class="${ringClassArray[6]}" cx="5" cy="5" r="${ringRadiusArray[6]}" />
-            <circle id="ring5" class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
-            <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
-            <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
-            <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
-            <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
-            <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
-          </svg>
-        `);
-        break;
-      case 5:
-        // code block - 5 rings
-        svgArray.push(html`
-          <svg class="graphics" viewBox="0 0 10 10" width="100%">
-            <circle id="ring5" class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
-            <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
-            <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
-            <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
-            <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
-            <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
-          </svg>
-        `);
-        break;
-      case 4:
-        // code block - 4 rings
-        svgArray.push(html`
-          <svg class="graphics" viewBox="0 0 10 10" width="100%">
-            <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
-            <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
-            <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
-            <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
-            <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
-          </svg>
-        `);
-        break;
-      default:
-        // code block - assume 3 rings
-        svgArray.push(html`
-          <svg class="graphics" viewBox="0 0 10 10" width="100%">
-            <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
-            <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
-            <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
-            <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
-          </svg>
-        `);
-    }
+    if (ring_count != undefined) {
+      const ringClassArray: string[] = [];
+      const ringRadiusArray: string[] = [];
+      for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
+        const ringColorClass: string = this._calcRingColorClass(ring_index);
+        ringClassArray.push(ringColorClass);
+        const ringRadius: string = this._calcCircleRadius(ring_index, ring_count);
+        ringRadiusArray.push(ringRadius);
+      }
 
+      switch (ring_count) {
+        case 7:
+          // code block - 7 rings
+          svgArray.push(html`
+            <svg class="graphics" viewBox="0 0 10 10" width="100%">
+              <circle id="ring7" class="${ringClassArray[7]}" cx="5" cy="5" r="${ringRadiusArray[7]}" />
+              <circle id="ring6" class="${ringClassArray[6]}" cx="5" cy="5" r="${ringRadiusArray[6]}" />
+              <circle id="ring5" class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
+              <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+              <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+              <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+              <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+              <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+            </svg>
+          `);
+          break;
+        case 6:
+          // code block - 6 rings
+          svgArray.push(html`
+            <svg class="graphics" viewBox="0 0 10 10" width="100%">
+              <circle id="ring7" class="${ringClassArray[6]}" cx="5" cy="5" r="${ringRadiusArray[6]}" />
+              <circle id="ring5" class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
+              <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+              <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+              <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+              <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+              <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+            </svg>
+          `);
+          break;
+        case 5:
+          // code block - 5 rings
+          svgArray.push(html`
+            <svg class="graphics" viewBox="0 0 10 10" width="100%">
+              <circle id="ring5" class="${ringClassArray[5]}" cx="5" cy="5" r="${ringRadiusArray[5]}" />
+              <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+              <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+              <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+              <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+              <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+            </svg>
+          `);
+          break;
+        case 4:
+          // code block - 4 rings
+          svgArray.push(html`
+            <svg class="graphics" viewBox="0 0 10 10" width="100%">
+              <circle id="ring4" class="${ringClassArray[4]}" cx="5" cy="5" r="${ringRadiusArray[4]}" />
+              <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+              <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+              <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+              <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+            </svg>
+          `);
+          break;
+        default:
+          // code block - assume 3 rings
+          svgArray.push(html`
+            <svg class="graphics" viewBox="0 0 10 10" width="100%">
+              <circle id="ring3" class="${ringClassArray[3]}" cx="5" cy="5" r="${ringRadiusArray[3]}" />
+              <circle id="ring2" class="${ringClassArray[2]}" cx="5" cy="5" r="${ringRadiusArray[2]}" />
+              <circle id="ring1" class="${ringClassArray[1]}" cx="5" cy="5" r="${ringRadiusArray[1]}" />
+              <circle id="ring0" class="${ringClassArray[0]}" cx="5" cy="5" r="${ringRadiusArray[0]}" />
+            </svg>
+          `);
+      }
+    }
     return svgArray;
   }
 
@@ -596,36 +619,38 @@ export class LightningDetectorCard extends LitElement {
     // create the LEGEND text areas for this card
     //   along with ring distance LEGEND text areas
     const labelsArray: TemplateResult[] = [];
-    labelsArray.push(
-      html`
-        <div class="distance-legend legend-light">Distance</div>
-      `,
-    );
-    labelsArray.push(
-      html`
-        <div class="detections-legend legend-light rotate">Detections</div>
-      `,
-    );
+    if (ring_count != undefined) {
+      labelsArray.push(
+        html`
+          <div class="distance-legend legend-light">Distance</div>
+        `,
+      );
+      labelsArray.push(
+        html`
+          <div class="detections-legend legend-light rotate">Detections</div>
+        `,
+      );
 
-    const units_string: string = this._getRingValueForKey(Constants.RINGSET_UNITS_KEY);
-    for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
-      const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
-      const count = currRingDictionary[Constants.RING_COUNT_KEY];
-      const darkness = count == 0 ? 'light' : 'dark';
-      const label_darkness: string = 'label-' + darkness;
+      const units_string: string = this._getRingValueForKey(Constants.RINGSET_UNITS_KEY);
+      for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
+        const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
+        const count = currRingDictionary[Constants.RING_COUNT_KEY];
+        const darkness = count == 0 ? 'light' : 'dark';
+        const label_darkness: string = 'label-' + darkness;
 
-      const from_dist = currRingDictionary[Constants.RING_FROM_UNITS_KEY];
-      const to_dist = currRingDictionary[Constants.RING_TO_UNITS_KEY];
-      let ring_distance_label: string = from_dist + ' - ' + to_dist + ' ' + units_string;
-      let ring_class: string = 'ring' + ring_index + '-dist';
-      if (ring_index == 0) {
-        ring_distance_label = 'Overhead';
-        ring_class = 'ring0 centered';
+        const from_dist = currRingDictionary[Constants.RING_FROM_UNITS_KEY];
+        const to_dist = currRingDictionary[Constants.RING_TO_UNITS_KEY];
+        let ring_distance_label: string = from_dist + ' - ' + to_dist + ' ' + units_string;
+        let ring_class: string = 'ring' + ring_index + '-dist';
+        if (ring_index == 0) {
+          ring_distance_label = 'Overhead';
+          ring_class = 'ring0 centered';
+        }
+        const ring_dist_id: string = this._calcDistanceLabelIdFromRingIndex(ring_index);
+        labelsArray.push(html`
+          <div id="${ring_dist_id}" class="${ring_class} ${label_darkness}">${ring_distance_label}</div>
+        `);
       }
-      const ring_dist_id: string = this._calcDistanceLabelIdFromRingIndex(ring_index);
-      labelsArray.push(html`
-        <div id="${ring_dist_id}" class="${ring_class} ${label_darkness}">${ring_distance_label}</div>
-      `);
     }
     return labelsArray;
   }
@@ -695,38 +720,46 @@ export class LightningDetectorCard extends LitElement {
     //   5 min periods
     //
     const subStringArray: string[] = [];
+    const uiDateOptions = {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    };
+
     const stormStartTimestamp: string = this._getRingValueForKey(Constants.RINGSET_STORM_FIRST_KEY);
     // force following to update too...
     this._storm_active = stormStartTimestamp != '' ? true : false;
     const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
 
+    let detectionsThisPeriod: boolean = false;
     if (stormStartTimestamp != '') {
       const relativeInterp = relativeTime(new Date(stormStartTimestamp), this.hass?.localize);
       subStringArray.push('Started: ' + relativeInterp); // [0]
 
+      //this._latestDetectionLabelID = '';
       let detectionInterp: string = 'None this period';
       if (mostRecentDetection != '') {
         detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
+        detectionsThisPeriod = true;
       }
       subStringArray.push('Latest: ' + detectionInterp); // [1]
+      //const lblIndex = subStringArray.length - 1;
+      //this._latestDetectionLabelID = 'card-substatus' + lblIndex;
     } else {
       subStringArray.push('Detector not yet reporting'); // [0]
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const sensor_name = this._config.entity!;
-    if (sensor_name.includes('past_')) {
+    const isPastRingset: boolean = sensor_name.includes('past_') ? true : false;
+    if (isPastRingset) {
       const asOfTimestamp: string = this._getRingValueForKey(Constants.RINGSET_TIMESTAMP_KEY);
       if (asOfTimestamp != '') {
         const date = new Date(asOfTimestamp);
-        const options = {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        };
-        subStringArray.push('As of: ' + date.toLocaleTimeString('en-us', options)); // [1] or [2]
+
+        subStringArray.push('As of: ' + date.toLocaleTimeString('en-us', uiDateOptions)); // [1] or [2]
       }
     } else {
       let periodInterp: string = '';
@@ -738,8 +771,31 @@ export class LightningDetectorCard extends LitElement {
         subStringArray.push('Showing: last ' + periodInterp); // [1] or [2]
       }
     }
-
+    if (detectionsThisPeriod == false && isPastRingset == false) {
+      // show storm end in minutes and when it will end if no more (but only for current ring-set)
+      const stormEndInMinutes = this._getRingValueForKey(Constants.RINGSET_STORM_END_MINUTES_KEY);
+      const predictedStormEnd = this._calcStormEndDate();
+      if (predictedStormEnd != undefined) {
+        subStringArray.push('Ends in ' + stormEndInMinutes + ' minutes:');
+        subStringArray.push(predictedStormEnd.toLocaleTimeString('en-us', uiDateOptions));
+      } else {
+        if (stormStartTimestamp != '') {
+          subStringArray.push('- bad storm end calcs?? -');
+        }
+      }
+    }
     return subStringArray;
+  }
+
+  private _calcStormEndDate(): Date | undefined {
+    let predictedStormEnd: Date | undefined = undefined;
+    const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_STORM_LAST_KEY);
+    const stormEndInMinutes: number = parseInt(this._getRingValueForKey(Constants.RINGSET_STORM_END_MINUTES_KEY), 10);
+    if (mostRecentDetection != '' && mostRecentDetection != '') {
+      const detectionAsDate = new Date(mostRecentDetection);
+      predictedStormEnd = new Date(detectionAsDate.getTime() + stormEndInMinutes * 60000);
+    }
+    return predictedStormEnd;
   }
 
   private _createCardDetailText(ring_count: number): string[] {
@@ -797,6 +853,8 @@ export class LightningDetectorCard extends LitElement {
       <div id="card-substatus0" class="substatus-text substatus-text-ln0"></div>
       <div id="card-substatus1" class="substatus-text substatus-text-ln1"></div>
       <div id="card-substatus2" class="substatus-text substatus-text-ln2"></div>
+      <div id="card-substatus3" class="substatus-text substatus-text-ln3"></div>
+      <div id="card-substatus4" class="substatus-text substatus-text-ln4"></div>
     `);
 
     for (let line_index = 0; line_index < nbr_detail_labels; line_index++) {

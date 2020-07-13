@@ -119,6 +119,8 @@ export class LightningDetectorCard extends LitElement {
 
     console.log('- config:');
     console.log(this._config);
+
+    this._updateSensorAvailability();
   }
 
   public getCardSize(): number {
@@ -127,8 +129,8 @@ export class LightningDetectorCard extends LitElement {
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     //return hasConfigOrEntityChanged(this, changedProps, false);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this._sensorAvailable = this.hass.states[this._config.entity!].state != 'unavailable';
+
+    this._updateSensorAvailability();
 
     if (changedProps.has('_config')) {
       return true;
@@ -285,7 +287,7 @@ export class LightningDetectorCard extends LitElement {
     for (let line_index = 0; line_index < nbr_substatus_labels; line_index++) {
       const label_id = this._calcSubstatusLabelIdFromLineIndex(line_index);
       let labelText: string = '';
-      if (this._storm_active && !this._storm_ended) {
+      if (this._sensorAvailable == false || (this._storm_active && !this._storm_ended)) {
         if (line_index < substatusLabels.length) {
           labelText = substatusLabels[line_index];
         }
@@ -359,6 +361,7 @@ export class LightningDetectorCard extends LitElement {
       //mark storm begin and NOT yet ended
       this._storm_active = true;
       this._storm_ended = false;
+      console.log('* START! storm active: ' + this._storm_active + ', storm ended: ' + this._storm_ended);
     }
 
     if (this._stormEndDate != undefined && this._storm_ended == false) {
@@ -369,6 +372,7 @@ export class LightningDetectorCard extends LitElement {
         // mark storm end and NO LONGER active
         this._storm_ended = true;
         this._storm_active = false;
+        console.log('* END! storm active: ' + this._storm_active + ', storm ended: ' + this._storm_ended);
       }
     }
 
@@ -414,6 +418,30 @@ export class LightningDetectorCard extends LitElement {
         const newLabel = this._storm_active ? 'Last report: ' + relativeInterp : '';
         labelElement.textContent = newLabel;
       }
+    }
+  }
+
+  private _updateSensorAvailability(): void {
+    let availChanged: boolean = false;
+    if (this.hass && this._config) {
+      const entityId = this._config.entity ? this._config.entity : undefined;
+      const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
+
+      if (!entityId && !stateObj) {
+        this._sensorAvailable = false;
+        availChanged = true; // force output in this case
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const tmpAvail = this.hass.states[this._config.entity!].state != 'unavailable';
+        availChanged = this._sensorAvailable != tmpAvail ? true : false;
+        this._sensorAvailable = tmpAvail;
+      }
+    } else {
+      this._sensorAvailable = false;
+      availChanged = true; // force output in this case
+    }
+    if (availChanged) {
+      console.log('* SENSOR available: ' + this._sensorAvailable);
     }
   }
 
@@ -817,6 +845,7 @@ export class LightningDetectorCard extends LitElement {
     } else {
       let detectionsThisPeriod: boolean = false;
       const stormStartTimestamp: string = this._getRingValueForKey(Constants.RINGSET_STORM_FIRST_KEY);
+      //let labelChanged: boolean = false;
       if (stormStartTimestamp != '') {
         const relativeInterp = relativeTime(new Date(stormStartTimestamp), this.hass?.localize);
         subStringArray.push('Started: ' + relativeInterp); // [0]
@@ -829,14 +858,19 @@ export class LightningDetectorCard extends LitElement {
         }
         subStringArray.push('Latest: ' + detectionInterp); // [1]
         const lblIndex = subStringArray.length - 1;
-        const tmpLabel = 'card-substatus' + lblIndex;
-        this._latestDetectionLabelID = tmpLabel;
+        const tmpLabelID = 'card-substatus' + lblIndex;
+        //labelChanged = this._latestDetectionLabelID != tmpLabelID ? true : false;
+        this._latestDetectionLabelID = tmpLabelID;
+
         this._stormEndDate = undefined; // back out possible end setup
       } else {
+        //labelChanged = this._latestDetectionLabelID != '' ? true : false;
+        this._latestDetectionLabelID = '';
         subStringArray.push('No storm info reported'); // [0]
       }
-      this._latestDetectionLabelID = '';
-
+      //if (labelChanged) {
+      //  console.log('* _latestDetectionLabelID: ' + this._latestDetectionLabelID);
+      //}
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const sensor_name = this._config.entity!;
       const isPastRingset: boolean = sensor_name.includes('past_') ? true : false;
@@ -864,19 +898,26 @@ export class LightningDetectorCard extends LitElement {
           this._stormEndDate = this._calcStormEndDate();
         }
 
+        //let labelChanged: boolean = false;
         if (this._stormEndDate != undefined) {
           const endInterp = relativeTime(new Date(this._stormEndDate), this.hass?.localize);
           subStringArray.push('Ends: ' + endInterp); // [2] or [3]
           const lblIndex = subStringArray.length - 1;
           const tmpLabelID = 'card-substatus' + lblIndex;
+          //labelChanged = this._endOfStormLabelID != tmpLabelID ? true : false;
           this._endOfStormLabelID = tmpLabelID;
+
           subStringArray.push('at: ' + this._getUiDateTimeForTimestamp(this._stormEndDate)); // [3] or [4]
         } else {
+          //labelChanged = this._endOfStormLabelID != '' ? true : false;
           this._endOfStormLabelID = '';
           if (stormStartTimestamp != '') {
             subStringArray.push('- bad storm end calcs?? -'); // [2] or [3]
           }
         }
+        //if (labelChanged) {
+        //  console.log('* _endOfStormLabelID: ' + this._endOfStormLabelID);
+        //}
       }
     }
     return subStringArray;

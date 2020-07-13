@@ -224,7 +224,8 @@ export class LightningDetectorCard extends LitElement {
       // console.log(this._config.ringsImage);
     }
 
-    const card_timestamp_value = this._storm_active ? 'Last report: ' + relativeInterp + '!' : '';
+    const card_timestamp_value =
+      this._sensorAvailable && this._storm_active ? 'Last report: ' + relativeInterp + '!' : '';
 
     return html`
       <ha-card
@@ -415,7 +416,7 @@ export class LightningDetectorCard extends LitElement {
         const stateStrInterp = computeStateDisplay(this.hass?.localize, stateObj!, this.hass?.language);
         const relativeInterp =
           stateStrInterp === undefined ? '{unknown}' : relativeTime(new Date(stateStrInterp), this.hass?.localize);
-        const newLabel = this._storm_active ? 'Last report: ' + relativeInterp : '';
+        const newLabel = this._sensorAvailable && this._storm_active ? 'Last report: ' + relativeInterp : '';
         labelElement.textContent = newLabel;
       }
     }

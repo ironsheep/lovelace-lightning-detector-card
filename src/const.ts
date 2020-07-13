@@ -1,4 +1,4 @@
-export const CARD_VERSION = '0.9.2';
+export const CARD_VERSION = '0.9.3';
 
 export const RINGSET_PAST_TOPNAME = 'prings';
 export const RINGSET_CURRENT_TOPNAME = 'crings';

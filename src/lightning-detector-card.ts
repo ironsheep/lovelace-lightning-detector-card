@@ -62,13 +62,14 @@ export class LightningDetectorCard extends LitElement {
   @property() private _config!: LightningDetectorCardConfig;
   @property() private _period_minutes: number = 0;
   @property() private _storm_active: boolean = false;
-  @property() private _storm_ended: boolean = false;
+  @property() private _storm_ended: boolean = true;
   @property() private _entity_online: boolean = false;
   @property() private _ring_count: number = 0;
   @property() private _ring_units: string = '';
 
   // and those that don't cause a re-render
   private _firstTime: boolean = true;
+  private _sensorAvailable: boolean = false;
   private _updateTimerID: NodeJS.Timeout | undefined;
   private _latestDetectionLabelID: string = '';
   private _endOfStormLabelID: string = '';
@@ -126,6 +127,8 @@ export class LightningDetectorCard extends LitElement {
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
     //return hasConfigOrEntityChanged(this, changedProps, false);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this._sensorAvailable = this.hass.states[this._config.entity!].state != 'unavailable';
 
     if (changedProps.has('_config')) {
       return true;
@@ -181,8 +184,6 @@ export class LightningDetectorCard extends LitElement {
 
       // set property values
       this._period_minutes = stateObj?.attributes[Constants.RINGSET_PERIOD_MINUTES_KEY];
-      const stormStartTimestamp = this._getRingValueForKey(Constants.RINGSET_STORM_FIRST_KEY);
-      this._storm_active = stormStartTimestamp != '' ? true : false;
 
       needRingsGeneration = true;
 
@@ -284,7 +285,7 @@ export class LightningDetectorCard extends LitElement {
     for (let line_index = 0; line_index < nbr_substatus_labels; line_index++) {
       const label_id = this._calcSubstatusLabelIdFromLineIndex(line_index);
       let labelText: string = '';
-      if (this._storm_ended == false) {
+      if (this._storm_active && !this._storm_ended) {
         if (line_index < substatusLabels.length) {
           labelText = substatusLabels[line_index];
         }
@@ -300,7 +301,7 @@ export class LightningDetectorCard extends LitElement {
     const nbr_detail_labels: number = this._config.detail_label_count!;
     for (let line_index = 0; line_index < nbr_detail_labels; line_index++) {
       let labelText: string = '';
-      if (this._storm_ended == false) {
+      if (this._storm_active && !this._storm_ended) {
         if (line_index < interpLabels.length) {
           labelText = interpLabels[line_index];
         }
@@ -312,13 +313,11 @@ export class LightningDetectorCard extends LitElement {
 
     // update rings
     //
-    let detectionCount = parseInt(this._getRingValueForKey(Constants.RINGSET_OUT_OF_RANGE_KEY), 10);
     for (let ring_index = 0; ring_index <= ring_count; ring_index++) {
       // adjust ring detections count and color
       let label_id = this._calcCountLabelIdFromRingIndex(ring_index);
       const currRingDictionary = this._getRingDictionaryForRingIndex(ring_index);
       const currCount = currRingDictionary[Constants.RING_COUNT_KEY];
-      detectionCount += currCount;
       let labelElement = root.getElementById(label_id);
       labelElement.textContent = currCount;
       //const currTextColor = currCount > 0 ? this._config.dark_text_color : this._config.light_text_color;  // <--- DIDN'T WORK (illegal? color value)
@@ -334,13 +333,6 @@ export class LightningDetectorCard extends LitElement {
       const ringElement = root.getElementById(ring_id);
       const currRingColor = this._getColorForRing(ring_index);
       ringElement.style.setProperty('fill', currRingColor);
-    }
-
-    if (detectionCount > 0) {
-      // if we have detections, we have a storm...
-      if (this._storm_ended == true) {
-        this._storm_ended = false;
-      }
     }
   }
 
@@ -361,16 +353,26 @@ export class LightningDetectorCard extends LitElement {
 
   private _handleCardUpdateTimerExpiration(): void {
     // call when time to refresh our card's relative time for last report and last detection
+    const stormStartTimestamp = this._getRingValueForKey(Constants.RINGSET_STORM_FIRST_KEY);
+    const tmpActive: boolean = stormStartTimestamp != '' ? true : false;
+    if (tmpActive == true && this._storm_active == false && this._storm_ended == true) {
+      //mark storm begin and NOT yet ended
+      this._storm_active = true;
+      this._storm_ended = false;
+    }
+
     if (this._stormEndDate != undefined && this._storm_ended == false) {
       const dateNow = new Date();
       // 'secondsBeforeStormEnd' is negative before storm end, positive after!
       const secondsBeforeStormEnd = dateNow.getTime() / 1000 - this._stormEndDate.getTime() / 1000;
       if (secondsBeforeStormEnd >= 0) {
+        // mark storm end and NO LONGER active
         this._storm_ended = true;
+        this._storm_active = false;
       }
     }
 
-    if (this._storm_ended == false) {
+    if (this._storm_active && !this._storm_ended) {
       const root: any = this.shadowRoot;
       const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
       if (stateObj != undefined) {
@@ -764,8 +766,9 @@ export class LightningDetectorCard extends LitElement {
     // status text is a single bold line of text at top right of card
     //  SHOWS: 1-line state of lightning in local area
 
-    let title: string = '';
-    if (this._storm_active) {
+    // no lightning title only if we have a sensor!!
+    let title: string = this._sensorAvailable == false ? '' : 'No Lightning in Area';
+    if (this._storm_active && !this._storm_ended) {
       // we have reporting data...
       const kMinNotSet = 999;
       const kMaxNotSet = -1;
@@ -790,8 +793,9 @@ export class LightningDetectorCard extends LitElement {
         }
       }
       const range_text = 'Lightning: ' + min_ring_dist + ' - ' + max_ring_dist + ' ' + units_string;
-      title = total_count == 0 ? 'No Lightning in Area' : range_text;
-      if (total_count > 0 && total_count == out_of_range) {
+      if (total_count > 0 && total_count != out_of_range) {
+        title = range_text;
+      } else {
         title = 'Lightning: out-of-range';
       }
     }
@@ -808,70 +812,70 @@ export class LightningDetectorCard extends LitElement {
     //   5 min periods
     //
     const subStringArray: string[] = [];
-
-    const stormStartTimestamp: string = this._getRingValueForKey(Constants.RINGSET_STORM_FIRST_KEY);
-    // force following to update too...
-    this._storm_active = stormStartTimestamp != '' ? true : false;
-    const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
-
-    let detectionsThisPeriod: boolean = false;
-    if (stormStartTimestamp != '') {
-      const relativeInterp = relativeTime(new Date(stormStartTimestamp), this.hass?.localize);
-      subStringArray.push('Started: ' + relativeInterp); // [0]
-
-      let detectionInterp: string = 'None this period';
-      if (mostRecentDetection != '') {
-        detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
-        detectionsThisPeriod = true;
-      }
-      subStringArray.push('Latest: ' + detectionInterp); // [1]
-      const lblIndex = subStringArray.length - 1;
-      const tmpLabel = 'card-substatus' + lblIndex;
-      this._latestDetectionLabelID = tmpLabel;
-      this._stormEndDate = undefined; // back out possible end setup
+    if (this._sensorAvailable == false) {
+      subStringArray.push('Unavailable'); // [0]
     } else {
-      subStringArray.push('Detector not yet reporting'); // [0]
-      this._latestDetectionLabelID = '';
-    }
+      let detectionsThisPeriod: boolean = false;
+      const stormStartTimestamp: string = this._getRingValueForKey(Constants.RINGSET_STORM_FIRST_KEY);
+      if (stormStartTimestamp != '') {
+        const relativeInterp = relativeTime(new Date(stormStartTimestamp), this.hass?.localize);
+        subStringArray.push('Started: ' + relativeInterp); // [0]
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const sensor_name = this._config.entity!;
-    const isPastRingset: boolean = sensor_name.includes('past_') ? true : false;
-    if (isPastRingset) {
-      const asOfTimestamp: string = this._getRingValueForKey(Constants.RINGSET_TIMESTAMP_KEY);
-      if (asOfTimestamp != '') {
-        const date = new Date(asOfTimestamp);
-        subStringArray.push('As of: ' + this._getUiDateTimeForTimestamp(date)); // [1] or [2]
-      }
-    } else {
-      let periodInterp: string = '';
-      if (this._period_minutes != 0 && this._period_minutes != undefined) {
-        const suffix = this._period_minutes == 1 ? '' : 's';
-        periodInterp = this._period_minutes + ' minute' + suffix;
-      }
-      if (this._storm_active && periodInterp != '') {
-        subStringArray.push('Showing: last ' + periodInterp); // [1] or [2]
-      }
-    }
-    if (detectionsThisPeriod == false && isPastRingset == false) {
-      // show storm end in minutes and when it will end
-      //  - IF THERE ARE NO MORE detections
-      //  - only for 'current' ring-set
-      if (this._stormEndDate == undefined) {
-        this._stormEndDate = this._calcStormEndDate();
-      }
-
-      if (this._stormEndDate != undefined) {
-        const endInterp = relativeTime(new Date(this._stormEndDate), this.hass?.localize);
-        subStringArray.push('Ends: ' + endInterp);
+        let detectionInterp: string = 'None this period';
+        const mostRecentDetection = this._getRingValueForKey(Constants.RINGSET_LAST_DETECTION_KEY);
+        if (mostRecentDetection != '') {
+          detectionInterp = relativeTime(new Date(mostRecentDetection), this.hass?.localize);
+          detectionsThisPeriod = true;
+        }
+        subStringArray.push('Latest: ' + detectionInterp); // [1]
         const lblIndex = subStringArray.length - 1;
-        const tmpLabelID = 'card-substatus' + lblIndex;
-        this._endOfStormLabelID = tmpLabelID;
-        subStringArray.push('at: ' + this._getUiDateTimeForTimestamp(this._stormEndDate));
+        const tmpLabel = 'card-substatus' + lblIndex;
+        this._latestDetectionLabelID = tmpLabel;
+        this._stormEndDate = undefined; // back out possible end setup
       } else {
-        this._endOfStormLabelID = '';
-        if (stormStartTimestamp != '') {
-          subStringArray.push('- bad storm end calcs?? -');
+        subStringArray.push('No storm info reported'); // [0]
+      }
+      this._latestDetectionLabelID = '';
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const sensor_name = this._config.entity!;
+      const isPastRingset: boolean = sensor_name.includes('past_') ? true : false;
+      if (isPastRingset) {
+        const asOfTimestamp: string = this._getRingValueForKey(Constants.RINGSET_TIMESTAMP_KEY);
+        if (asOfTimestamp != '' && this._sensorAvailable == true) {
+          const date = new Date(asOfTimestamp);
+          subStringArray.push('As of: ' + this._getUiDateTimeForTimestamp(date)); // [1] or [2]
+        }
+      } else {
+        let periodInterp: string = '';
+        if (this._period_minutes != 0 && this._period_minutes != undefined) {
+          const suffix = this._period_minutes == 1 ? '' : 's';
+          periodInterp = this._period_minutes + ' minute' + suffix;
+        }
+        if (this._storm_active && periodInterp != '') {
+          subStringArray.push('Showing: last ' + periodInterp); // [1] or [2]
+        }
+      }
+      if (detectionsThisPeriod == false && isPastRingset == false) {
+        // show storm end in minutes and when it will end
+        //  - IF THERE ARE NO MORE detections
+        //  - only for 'current' ring-set
+        if (this._stormEndDate == undefined) {
+          this._stormEndDate = this._calcStormEndDate();
+        }
+
+        if (this._stormEndDate != undefined) {
+          const endInterp = relativeTime(new Date(this._stormEndDate), this.hass?.localize);
+          subStringArray.push('Ends: ' + endInterp); // [2] or [3]
+          const lblIndex = subStringArray.length - 1;
+          const tmpLabelID = 'card-substatus' + lblIndex;
+          this._endOfStormLabelID = tmpLabelID;
+          subStringArray.push('at: ' + this._getUiDateTimeForTimestamp(this._stormEndDate)); // [3] or [4]
+        } else {
+          this._endOfStormLabelID = '';
+          if (stormStartTimestamp != '') {
+            subStringArray.push('- bad storm end calcs?? -'); // [2] or [3]
+          }
         }
       }
     }

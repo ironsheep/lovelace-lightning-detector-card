@@ -18,11 +18,11 @@ We are working on a new Lovelace card for depicting lightning in your local area
 
 NOTE: this is our initial mockup but it is nearly identical to what is currently working in our test environment.
 
-From another perspective, we are taking data shown below on the left as  Home Assistant sees it to make the display on the right:
+Here are a couple videos showing our progress:
 
-![Currently seen by Home Assistant](Docs/images/intent-card.png)
+- [Storm passing nearby](https://youtu.be/JqDANkaNPYQ) - youtube
+- [Storm passing overhead](https://youtu.be/8p5WBOeDCfc) - youtube
 
-_NOTE: the values on the left are not what are shown on the right (which is more interesting...) but you get the point, right?_
 
 ## Support
 

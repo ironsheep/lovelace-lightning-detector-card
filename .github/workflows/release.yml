@@ -14,19 +14,17 @@ jobs:
       # Build
       - name: Build the file
         run: |
-          pwd
-          find . -type f -name 'lightning-detector-card.ts'
-          cd /home/runner/work/lightning-detector-card/lightning-detector-card
+          cd /home/runner/work/lovelace-lightning-detector-card/lovelace-lightning-detector-card
           npm install
           npm run build
 
       # Upload build file to the release as an asset.
-      - name: Upload zip to release
+      - name: Upload file to release
         uses: svenstaro/upload-release-action@v1-release
 
         with:
           repo_token: ${{ secrets.REPO_ACCESS }}
-          file: /home/runner/work/lightning-detector-card/lightning-detector-card/dist/lightning-detector-card.js
+          file: /home/runner/work/lovelace-lightning-detector-card/lovelace-lightning-detector-card/dist/lightning-detector-card.js
           asset_name: lightning-detector-card.js
           tag: ${{ github.ref }}
           overwrite: true

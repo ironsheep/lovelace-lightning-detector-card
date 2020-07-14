@@ -2,7 +2,13 @@
 
 ![Project Maintenance][maintenance-shield]
 
-I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (*where i spend too much money ;-)*) and attached it to one of my Raspberry Pi's that I had sitting around.  I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi  and forward what it detected to my MQTT broker which was then forwarded onn to my Home Assistant installation.  This Lovelace Card project provides a means to display the lighting detector data in a much more rapidly interpreted form.
+[![License][license-shield]](LICENSE)
+
+[![GitHub Release][releases-shield]][releases]
+
+![Release](https://github.com/ironsheep/lovelace-lightning-detector-card/workflows/Release/badge.svg?branch=v1.0.0)
+
+I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (*where i spend too much money ;-)*) and attached it to one of my Raspberry Pi's that I had sitting around.  I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi  and forward what it detected to my MQTT broker which was then forwarded onn to my Home Assistant installation.  This Lovelace Card project provides a means to display the lighting detector data in a much more easily interpreted form.
 
 ### Where to get the sensor board
 
@@ -31,22 +37,10 @@ You are certainly welcome to help me out for a couple of :coffee:'s or :pizza: s
 [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep)
 
 
----
-
--------------------- - - - - - - CAUTION -- CAUTION -- CAUTION
-
-WHILE THIS CARD IS NOT YET READY FOR USE. The following is beginning to appear here as we are building the card for you.
-
-Please be patient, this marker will be removed when the card is finally ready for use (_after we have a working version for you to use, of course._)
-
--------------------- - - - - - - CAUTION -- CAUTION -- CAUTION
-
----
-
 ## Installation
 
 Use [HACS](https://github.com/custom-components/hacs) (recommended)
-or download [lightning-detector-card.js](https://github.com/ironsheep/lovelace-lightning-detector-card/raw/master/lightning-detector-card.js) and place it in your www directory.
+or download *lightning-detector-card.js* from our [Latest Release](https://github.com/ironsheep/lovelace-lightning-detector-card/releases/latest) and place it in your www directory.
 
 In your ui-lovelace.yaml (or resources.yaml, whichever you use for resources) add this:
 
@@ -61,17 +55,21 @@ If you don't use HACS please change the url accordingly.
 
 | Name             | Type   | Default       | Description                 |
 | ---------------- | ------ | ------------- | --------------------------- |
-| title            | string |               | Common title                |
-| light_color      | string | yellow        | color override (optional)   |
-| medium_color     | string | orange        | color override (optional)   |
-| heavy_color      | string | red           | color override (optional)   |
-| background_color | string | theme-default | background color (optional) |
-| light_text_color | string | black         | color override (optional)   |
-| dark_text_color  | string | light-grey    | color override (optional)   |
+| title            | string |  {sensor name}             | Common title                
 
-### The sensor setting affect this display
+### The sensor setting affecting this display
 
-e.g., The number of rings is controlled by the _config.ini_ in your sensor setup files.
+The Lightning MQTT Daemon sends some settings to this card. These settings are:
+
+
+| Name             | Type   | Default       | Description                 |
+| ---------------- | ------ | ------------- | --------------------------- |
+| period\_in\_minutes        | number |  5   | display detections during this period.            
+| number\_of\_rings          | number |  5   | number of rings [3-7]    
+| distance\_as               | string |  km  | distance units [km, mi]     
+| end\_storm\_after\_minutes | number |  30  | mark storm ended after no further detections during this end period.  
+
+To change any of these you'll want to modify the *config.ini* for your sensor and restart it. This card will then automatically pick up the new values.                 
 
 ## Credits
 
@@ -88,3 +86,6 @@ Follow these links for more information:
 ### [Copyright](copyright) | [License](LICENSE)
 
 [maintenance-shield]: https://img.shields.io/badge/maintainer-S%20M%20Moraco%20%40ironsheepbiz-blue.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/ironsheep/lovelace-lightning-detector-card.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/ironsheep/lovelace-lightning-detector-card.svg?style=for-the-badge
+[releases]: https://github.com/ironsheep/lovelace-lightning-detector-card/releases

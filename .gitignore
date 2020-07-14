@@ -4,4 +4,4 @@
 package-lock.json
 /dist
 README-clone.md
-src/lightning-detector-card-REF.ts
+src/*REF.ts

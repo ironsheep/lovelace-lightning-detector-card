@@ -18,13 +18,13 @@ Please visit my sensor project for detail on how/where to get the sensor and for
 
 ## About this card
 
-We are working on a new Lovelace card for depicting lightning in your local area as detected by your own inexpensive sensor. Here are what the card will look like:
+This is aLovelace card for depicting lightning in your local area as detected by your own inexpensive sensor. The card has range-rings that when colored indicate that lightning was detected at that range. There are additional details describing when the detections first started (Storm began) how frequent and how stong the detections are (relative power).
 
 ![Discovered by Home Assistant](Docs/images/goal-cards.png)
 
-NOTE: this is our initial mockup but it is nearly identical to what is currently working in our test environment.
+With this card you can see a storm approach and how strong it is. You'll also see when the last strike occurred.
 
-Here are a couple videos showing our progress:
+Here are a couple videos showing the card in action:
 
 - [Storm passing nearby](https://youtu.be/JqDANkaNPYQ) - youtube
 - [Storm passing overhead](https://youtu.be/8p5WBOeDCfc) - youtube
@@ -86,6 +86,6 @@ Follow these links for more information:
 ### [Copyright](copyright) | [License](LICENSE)
 
 [maintenance-shield]: https://img.shields.io/badge/maintainer-S%20M%20Moraco%20%40ironsheepbiz-blue.svg?style=for-the-badge
-[license-shield]: https://img.shields.io/github/license/ironsheep/lovelace-lightning-detector-card.svg?style=for-the-badge
+[license-shield]: https://camo.githubusercontent.com/bc04f96d911ea5f6e3b00e44fc0731ea74c8e1e9/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f6c6963656e73652f69616e74726963682f746578742d646976696465722d726f772e7376673f7374796c653d666f722d7468652d6261646765
 [releases-shield]: https://img.shields.io/github/release/ironsheep/lovelace-lightning-detector-card.svg?style=for-the-badge
 [releases]: https://github.com/ironsheep/lovelace-lightning-detector-card/releases

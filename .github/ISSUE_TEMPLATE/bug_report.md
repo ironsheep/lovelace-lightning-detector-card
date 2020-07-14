@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report an issue you are experiencing with the Lightning Detector Card
 title: ''
 labels: bug
 assignees: ''

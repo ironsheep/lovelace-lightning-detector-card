@@ -15,11 +15,13 @@ import {
   applyThemesOnElement,
   formatDateTime,
 } from 'custom-card-helpers';
+/*
 import {
   getFontColorBasedOnBackgroundColor,
   applyBrightnessToColor,
   getLightColorBasedOnTemperature,
 } from './color_helpers';
+*/
 import './editor';
 
 import { LightningDetectorCardConfig } from './types';
@@ -63,9 +65,6 @@ export class LightningDetectorCard extends LitElement {
   @property() private _period_minutes: number = 0;
   @property() private _storm_active: boolean = false;
   @property() private _storm_ended: boolean = true;
-  @property() private _entity_online: boolean = false;
-  @property() private _ring_count: number = 0;
-  @property() private _ring_units: string = '';
 
   // and those that don't cause a re-render
   private _firstTime: boolean = true;

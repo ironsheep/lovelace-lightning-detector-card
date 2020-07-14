@@ -9,7 +9,7 @@ jobs:
     name: Prepare release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
 
       # Build
       - name: Build the file
@@ -23,7 +23,7 @@ jobs:
         uses: svenstaro/upload-release-action@v1-release
 
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.REPO_ACCESS }}
           file: /home/runner/work/lightning-detector-card/lightning-detector-card/dist/lightning-detector-card.js
           asset_name: lightning-detector-card.js
           tag: ${{ github.ref }}

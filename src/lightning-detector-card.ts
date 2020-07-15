@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 import { LitElement, html, customElement, property, CSSResult, TemplateResult, css, PropertyValues } from 'lit-element';
-// found custom-card-helpers:applyThemesOnElement being imported in roku-card... not here.  Useful? */
 import {
   HomeAssistant,
-  hasConfigOrEntityChanged,
   hasAction,
   ActionHandlerEvent,
   handleAction,
@@ -13,17 +11,8 @@ import {
   relativeTime,
   computeStateDisplay,
   applyThemesOnElement,
-  formatDateTime,
 } from 'custom-card-helpers';
-/*
-import {
-  getFontColorBasedOnBackgroundColor,
-  applyBrightnessToColor,
-  getLightColorBasedOnTemperature,
-} from './color_helpers';
-*/
 import './editor';
-
 import { LightningDetectorCardConfig } from './types';
 import { actionHandler } from './action-handler-directive';
 import * as Constants from './const';
@@ -267,6 +256,7 @@ export class LightningDetectorCard extends LitElement {
     console.log('- changed Props: ');
     console.log(changedProps);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const root: any = this.shadowRoot;
 
     // update card labels
@@ -377,6 +367,7 @@ export class LightningDetectorCard extends LitElement {
     }
 
     if (this._storm_active && !this._storm_ended) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const root: any = this.shadowRoot;
       const stateObj = this._config.entity ? this.hass.states[this._config.entity] : undefined;
       if (stateObj != undefined) {
@@ -1000,14 +991,18 @@ export class LightningDetectorCard extends LitElement {
     `;
   }
 
-  static get styles(): CSSResult {
-    return css`
+  /*
+     Useful debug stuff
       ha-card {
-        /*background-color: violet;*/
+        /*background-color: violet;*-
       }
       div {
-        /*background-color: red;*/
+        /*background-color: red;*-
       }
+  */
+
+  static get styles(): CSSResult {
+    return css`
       circle {
         stroke: #8c8c8c;
         stroke-dasharray: 0 0.1;

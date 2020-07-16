@@ -2,13 +2,15 @@
 
 ![Project Maintenance][maintenance-shield]
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+
 [![License][license-shield]](LICENSE)
 
 [![GitHub Release][releases-shield]][releases]
 
 ![Release](https://github.com/ironsheep/lovelace-lightning-detector-card/workflows/Release/badge.svg?branch=v1.0.0)
 
-I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (*where i spend too much money ;-)*) and attached it to one of my Raspberry Pi's that I had sitting around.  I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi  and forward what it detected to my MQTT broker which was then forwarded onn to my Home Assistant installation.  This Lovelace Card project provides a means to display the lighting detector data in a much more easily interpreted form.
+I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (*where i spend too much money ;-)*) and attached it to one of my Raspberry Pi's that I had sitting around.  I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi and forward what it detected to my MQTT broker which was then forwarded on to my Home Assistant installation. This Lovelace Card provides a means to display this lighting detector data in an easily interpreted form.
 
 ### Where to get the sensor board
 
@@ -18,11 +20,11 @@ Please visit my sensor project for detail on how/where to get the sensor and for
 
 ## About this card
 
-This is aLovelace card for depicting lightning in your local area as detected by your own inexpensive sensor. The card has range-rings that when colored indicate that lightning was detected at that range. There are additional details describing when the detections first started (Storm began) how frequent and how stong the detections are (relative power).
+This is a Lovelace card showing you lightning in your local area **as detected by your own inexpensive sensor**. The card has range-rings that when colored indicate that lightning was detected at that range. There are additional details describing when the detections first started (Storm began) how frequent and how stong the detections are (relative power).
 
 ![Discovered by Home Assistant](./Docs/images/Actual-Cards.png)
 
-With this card you can see a storm approach and how strong it is. You'll also see when the last strike occurred.
+With this card you can see a storm approach and how strong it is and when it leaves. You'll also see storm details such as when it started and when it ended.
 
 Here are a couple videos showing the card in action:
 
@@ -30,9 +32,9 @@ Here are a couple videos showing the card in action:
 - [Storm passing overhead](https://youtu.be/8p5WBOeDCfc) - youtube
 
 
-## Support
+------
 
-You are certainly welcome to help me out for a couple of :coffee:'s or :pizza: slices!
+You are always welcome to help me out for a couple of :coffee:'s or :pizza: slices!
 
 [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep)
 

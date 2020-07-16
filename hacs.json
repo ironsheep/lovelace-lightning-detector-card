@@ -1,5 +1,5 @@
 {
     "name": "Lightning Detector Card",
-    "render_readme": true,
+    "render_readme": false,
     "filename": "lightning-detector-card.js"
 }

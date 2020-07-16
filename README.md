@@ -46,7 +46,7 @@ In your ui-lovelace.yaml (or resources.yaml, whichever you use for resources) ad
 
 ```yaml
 - url: /hacsfiles/lightning-detector-card/lightning-detector-card.js
-  type: model
+  type: module
 ```
 
 If you don't use HACS please change the url accordingly.

@@ -20,7 +20,7 @@ Please visit my sensor project for detail on how/where to get the sensor and for
 
 This is aLovelace card for depicting lightning in your local area as detected by your own inexpensive sensor. The card has range-rings that when colored indicate that lightning was detected at that range. There are additional details describing when the detections first started (Storm began) how frequent and how stong the detections are (relative power).
 
-![Discovered by Home Assistant](Docs/images/goal-cards.png)
+![Discovered by Home Assistant](./Docs/images/Actual-Cards.png)
 
 With this card you can see a storm approach and how strong it is. You'll also see when the last strike occurred.
 

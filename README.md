@@ -2,13 +2,13 @@
 
 ![Project Maintenance][maintenance-shield]
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+[![hacs_badge][hacs-shield]](https://github.com/custom-components/hacs)
 
 [![License][license-shield]](LICENSE)
 
 [![GitHub Release][releases-shield]][releases]
 
-![Release](https://github.com/ironsheep/lovelace-lightning-detector-card/workflows/Release/badge.svg?branch=v1.0.0)
+![Release](https://github.com/ironsheep/lovelace-lightning-detector-card/workflows/Release/badge.svg)
 
 I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (*where i spend too much money ;-)*) and attached it to one of my Raspberry Pi's that I had sitting around.  I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi and forward what it detected to my MQTT broker which was then forwarded on to my Home Assistant installation. This Lovelace Card provides a means to display this lighting detector data in an easily interpreted form.
 
@@ -47,7 +47,7 @@ or download *lightning-detector-card.js* from our [Latest Release](https://githu
 In your ui-lovelace.yaml (or resources.yaml, whichever you use for resources) add this:
 
 ```yaml
-- url: /hacsfiles/lightning-detector-card/lightning-detector-card.js
+- url: /hacsfiles/lovelace-lightning-detector-card/lightning-detector-card.js
   type: module
 ```
 
@@ -88,6 +88,7 @@ Follow these links for more information:
 ### [Copyright](copyright) | [License](LICENSE)
 
 [maintenance-shield]: https://img.shields.io/badge/maintainer-S%20M%20Moraco%20%40ironsheepbiz-blue.svg?style=for-the-badge
+[hacs-shield]: https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge
 [license-shield]: https://camo.githubusercontent.com/bc04f96d911ea5f6e3b00e44fc0731ea74c8e1e9/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f6c6963656e73652f69616e74726963682f746578742d646976696465722d726f772e7376673f7374796c653d666f722d7468652d6261646765
 [releases-shield]: https://img.shields.io/github/release/ironsheep/lovelace-lightning-detector-card.svg?style=for-the-badge
 [releases]: https://github.com/ironsheep/lovelace-lightning-detector-card/releases

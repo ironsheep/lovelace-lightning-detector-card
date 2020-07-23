@@ -28,7 +28,7 @@ or download *lightning-detector-card.js* from our [Latest Release](https://githu
 In your ui-lovelace.yaml (or resources.yaml, whichever you use for resources) add this:
 
 ```yaml
-- url: /hacsfiles/lightning-detector-card/lightning-detector-card.js
+- url: /hacsfiles/lovelace-lightning-detector-card/lightning-detector-card.js
   type: module
 ```
 

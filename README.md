@@ -10,13 +10,11 @@
 
 ![Release](https://github.com/ironsheep/lovelace-lightning-detector-card/workflows/Release/badge.svg)
 
-I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (*where i spend too much money ;-)*) and attached it to one of my Raspberry Pi's that I had sitting around.  I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi and forward what it detected to my MQTT broker which was then forwarded on to my Home Assistant installation. This Lovelace Card provides a means to display this lighting detector data in an easily interpreted form.
+I picked up an inexpensive lightning detector sensor based on the AS3925 integrated circuit on a small circuit board from [Sparkfun](https://www.sparkfun.com) (_where i spend too much money ;-)_) and attached it to one of my Raspberry Pi's that I had sitting around. I then installed my software ([see my detector project](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon)) to talk to the AS3935 on the RPi and forward what it detected to my MQTT broker which was then forwarded on to my Home Assistant installation. This Lovelace Card provides a means to display this lighting detector data in an easily interpreted form.
 
-### Where to get the sensor board
+### Where to get the AS3935 sensor board
 
 Please visit my sensor project for detail on how/where to get the sensor and for the software needed to send the data to Home Assistant. [See my [lightning-detector-MQTT2HA-Daemon](https://github.com/ironsheep/lightning-detector-MQTT2HA-Daemon) project.]
-
-
 
 ## About this card
 
@@ -31,18 +29,16 @@ Here are a couple videos showing the card in action:
 - [Storm passing nearby](https://youtu.be/JqDANkaNPYQ) - youtube
 - [Storm passing overhead](https://youtu.be/8p5WBOeDCfc) - youtube
 
-
-------
+---
 
 You are always welcome to help me out for a couple of :coffee:'s or :pizza: slices!
 
 [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep)
 
-
 ## Installation
 
 Use [HACS](https://github.com/custom-components/hacs) (recommended)
-or download *lightning-detector-card.js* from our [Latest Release](https://github.com/ironsheep/lovelace-lightning-detector-card/releases/latest) and place it in your www directory.
+or download _lightning-detector-card.js_ from our [Latest Release](https://github.com/ironsheep/lovelace-lightning-detector-card/releases/latest) and place it in your www directory.
 
 In your ui-lovelace.yaml (or resources.yaml, whichever you use for resources) add this:
 
@@ -55,23 +51,22 @@ If you don't use HACS please change the url accordingly.
 
 ## Config
 
-| Name             | Type   | Default       | Description                 |
-| ---------------- | ------ | ------------- | --------------------------- |
-| title            | string |  {sensor name}             | Common title                
+| Name  | Type   | Default       | Description  |
+| ----- | ------ | ------------- | ------------ |
+| title | string | {sensor name} | Common title |
 
-### The sensor setting affecting this display
+### Sensor settings affecting this display
 
 The Lightning MQTT Daemon sends some settings to this card. These settings are:
 
+| Name                    | Type   | Default | Description                                                          |
+| ----------------------- | ------ | ------- | -------------------------------------------------------------------- |
+| period_in_minutes       | number | 5       | display detections during this period.                               |
+| number_of_rings         | number | 5       | number of rings [3-7]                                                |
+| distance_as             | string | km      | distance units [km, mi]                                              |
+| end_storm_after_minutes | number | 30      | mark storm ended after no further detections during this end period. |
 
-| Name             | Type   | Default       | Description                 |
-| ---------------- | ------ | ------------- | --------------------------- |
-| period\_in\_minutes        | number |  5   | display detections during this period.            
-| number\_of\_rings          | number |  5   | number of rings [3-7]    
-| distance\_as               | string |  km  | distance units [km, mi]     
-| end\_storm\_after\_minutes | number |  30  | mark storm ended after no further detections during this end period.  
-
-To change any of these you'll want to modify the *config.ini* for your sensor and restart it. This card will then automatically pick up the new values.                 
+To change any of these you'll want to modify the _config.ini_ for your sensor and restart it. This card will then automatically pick up the new values.
 
 ## Credits
 

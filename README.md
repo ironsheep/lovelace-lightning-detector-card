@@ -29,11 +29,13 @@ Here are a couple videos showing the card in action:
 - [Storm passing nearby](https://youtu.be/JqDANkaNPYQ) - youtube
 - [Storm passing overhead](https://youtu.be/8p5WBOeDCfc) - youtube
 
----
+----
 
-You are always welcome to help me out for a couple of :coffee:'s or :pizza: slices!
+If you like my work and/or this has helped you in some way then feel free to help me out for a couple of :coffee:'s or :pizza: slices!
 
 [![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/ironsheep)
+
+----
 
 ## Installation
 

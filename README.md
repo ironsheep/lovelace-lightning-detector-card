@@ -51,11 +51,30 @@ In your ui-lovelace.yaml (or resources.yaml, whichever you use for resources) ad
 
 If you don't use HACS please change the url accordingly.
 
-## Config
+## Card Configuration
 
 | Name  | Type   | Default       | Description  |
 | ----- | ------ | ------------- | ------------ |
-| title | string | {sensor name} | Common title |
+| type | string | none | 'custom:lightning-detector-card'|
+| entity | string | none | use `sensor.current_ringset` or `sensor.past_ringset` (where "sensor" may be different in your installation) |
+| name | string | none | Override name for card |
+| show_name | bool | false | use true/false to show/hide name |
+
+### Example Lovelace Card Configuration
+
+*This following example is from my current test installation.*
+
+```yaml
+  - type: 'custom:lightning-detector-card'
+    entity: sensor.current_ringset
+    name: "Lightning Detector"
+    show_name: false
+
+  - type: 'custom:lightning-detector-card'
+    entity: sensor.past_ringset
+    name: "Lightning Detector (Prior)"
+    show_name: false          
+```
 
 ### Sensor settings affecting this display
 
